@@ -27,6 +27,7 @@ export function RegisterPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,12 +37,40 @@ export function RegisterPage() {
     setLoading(true)
     try {
       await register(name, email, password)
-      navigate('/conta')
+      setSuccess(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao criar conta')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-outer-bg)' }}>
+        <div className="w-full max-w-md">
+          <div className="card p-8 text-center">
+            <div className="text-4xl mb-4">✉️</div>
+            <div className="font-mono text-[10px] uppercase tracking-[3px] mb-2" style={{ color: 'var(--color-muted)' }}>
+              Reharm Studio
+            </div>
+            <h1 className="font-sans text-2xl font-bold mb-3" style={{ color: 'var(--color-ink)' }}>
+              Conta criada!
+            </h1>
+            <p className="text-sm mb-6" style={{ color: 'var(--color-muted)' }}>
+              Enviamos um link de confirmação para <strong style={{ color: 'var(--color-ink)' }}>{email}</strong>.
+              <br />Clique no link do email para ativar sua conta e fazer login.
+            </p>
+            <button
+              onClick={() => navigate('/login')}
+              className="btn-primary w-full py-3 text-sm font-semibold rounded-xl"
+            >
+              Ir para o login
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
