@@ -83,6 +83,11 @@
   }
 
   select option { background: var(--color-card); color: var(--color-ink); }
+
+  /* Esconde setas nativas do input number */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type='number'] { -moz-appearance: textfield; }
 }
 
 /* ── Utilitários temáticos ──────────────────────── */

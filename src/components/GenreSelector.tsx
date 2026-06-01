@@ -7,7 +7,7 @@ interface Props {
   bpm: number
   onGenre: (g: string) => void
   onExt: (e: Extension) => void
-  onBpm: (b: number) => void
+  onBpm: (b: number | ((prev: number) => number)) => void
 }
 
 export function GenreSelector({ genre, ext, bpm, onGenre, onExt, onBpm }: Props) {
@@ -64,14 +64,54 @@ export function GenreSelector({ genre, ext, bpm, onGenre, onExt, onBpm }: Props)
           <span className="font-mono text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-muted)' }}>
             BPM
           </span>
-          <input
-            type="number"
-            value={bpm}
-            min={50}
-            max={200}
-            onChange={e => onBpm(Math.max(50, Math.min(200, Number(e.target.value) || 120)))}
-            className="input-neumorphic w-16 px-2 py-2 font-mono text-sm text-center"
-          />
+          <div
+            className="flex items-center rounded-xl overflow-hidden"
+            style={{
+              background: 'var(--color-bg)',
+              boxShadow: 'var(--shadow-input)',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            <button
+              onClick={() => onBpm(Math.max(50, bpm - 1))}
+              onMouseDown={e => {
+                const id = setInterval(() => onBpm(v => Math.max(50, v - 1)), 120)
+                const stop = () => clearInterval(id)
+                e.currentTarget.addEventListener('mouseup', stop, { once: true })
+                window.addEventListener('mouseup', stop, { once: true })
+              }}
+              className="px-3 py-2 text-base font-light transition-colors select-none"
+              style={{ color: 'var(--color-muted)' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-primary)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-muted)')}
+            >
+              −
+            </button>
+            <input
+              type="number"
+              value={bpm}
+              min={50}
+              max={200}
+              onChange={e => onBpm(Math.max(50, Math.min(200, Number(e.target.value) || 120)))}
+              className="w-12 py-2 font-mono text-sm text-center bg-transparent focus:outline-none"
+              style={{ color: 'var(--color-ink)' }}
+            />
+            <button
+              onClick={() => onBpm(Math.min(200, bpm + 1))}
+              onMouseDown={e => {
+                const id = setInterval(() => onBpm(v => Math.min(200, v + 1)), 120)
+                const stop = () => clearInterval(id)
+                e.currentTarget.addEventListener('mouseup', stop, { once: true })
+                window.addEventListener('mouseup', stop, { once: true })
+              }}
+              className="px-3 py-2 text-base font-light transition-colors select-none"
+              style={{ color: 'var(--color-muted)' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-primary)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-muted)')}
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
     </div>

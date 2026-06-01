@@ -127,7 +127,7 @@ export default function App() {
           bpm={bpm}
           onGenre={handleGenreChange}
           onExt={setExtOverride}
-          onBpm={setBpmOverride}
+          onBpm={v => setBpmOverride(typeof v === 'function' ? v(bpm) : v)}
         />
       </section>
 
