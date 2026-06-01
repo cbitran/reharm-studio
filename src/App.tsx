@@ -15,6 +15,7 @@ import { InstrumentGuide } from './components/InstrumentGuide'
 import { HarmonicField } from './components/HarmonicField'
 import { ProjectBar } from './components/ProjectBar'
 import { SongSearch, type SongAnalysis } from './components/SongSearch'
+import { UnifiedPlayer } from './components/UnifiedPlayer'
 import type { Extension, ViradasMode, ReharmChord } from './types'
 import type { SavedProject } from './lib/projects'
 
@@ -232,6 +233,25 @@ export default function App() {
           </div>
         )}
       </section>
+
+      {/* 05.5 — Remix Preview */}
+      {parsedChords.length > 0 && (
+        <section id="remix-preview" className="mb-10 scroll-mt-6">
+          <SectionHeader
+            number="05.5"
+            title={t('sections.player', 'Remix Preview')}
+            subtitle={t('sections.playerHint', '')}
+          />
+          <UnifiedPlayer
+            pianoEvents={pe}
+            bassEvents={be}
+            bpm={bpm}
+            genre={genre}
+            genreName={genreName}
+            chords={parsedChords}
+          />
+        </section>
+      )}
 
       {/* 06 — Export */}
       <section id="export" className="mb-10 scroll-mt-6">

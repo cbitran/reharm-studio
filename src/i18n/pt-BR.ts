@@ -24,6 +24,8 @@ export default {
     grooveHint: 'Swing e viradas definem o balanço rítmico do MIDI gerado.',
     grid: 'Grid rítmico',
     gridHint: 'Visualização dos eventos gerados no grid de 16 steps.',
+    player: 'Remix Preview',
+    playerHint: 'Ouça a sugestão de arranjo, isole trilhas e exporte o MIDI para sua DAW.',
     export: 'Resultado',
     exportHint: 'Ouça o preview e baixe os MIDIs separados por instrumento.',
     instruments: 'Instrumentos sugeridos',

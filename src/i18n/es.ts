@@ -24,6 +24,8 @@ export default {
     grooveHint: 'El swing y las vueltas definen el ritmo del MIDI generado.',
     grid: 'Rejilla Rítmica',
     gridHint: 'Visualización de los eventos generados en la rejilla de 16 pasos.',
+    player: 'Remix Preview',
+    playerHint: 'Escucha la sugerencia de arreglo, aisla pistas y exporta MIDI a tu DAW.',
     export: 'Resultado',
     exportHint: 'Escucha la vista previa y descarga los MIDI separados por instrumento.',
     instruments: 'Instrumentos sugeridos',

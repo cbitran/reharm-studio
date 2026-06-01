@@ -24,6 +24,8 @@ export default {
     grooveHint: 'Swing and turns define the rhythmic feel of the generated MIDI.',
     grid: 'Rhythmic Grid',
     gridHint: 'Visualization of generated events on the 16-step grid.',
+    player: 'Remix Preview',
+    playerHint: 'Hear the arrangement suggestion, isolate tracks and export MIDI to your DAW.',
     export: 'Result',
     exportHint: 'Listen to the preview and download MIDI separated by instrument.',
     instruments: 'Suggested instruments',
