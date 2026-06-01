@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { NOTE_NAMES } from '../core/parser'
 import { buildHarmonicField, CATEGORY_META, MOODS, EXTENSION_PRESETS, type HarmonicChord, type ChordCategory } from '../lib/harmonic-field'
 import { VoicingKeyboard } from './VoicingKeyboard'
+import { previewChord } from '../audio/player'
 import type { Extension, ParsedChord } from '../types'
 
 interface Props {
@@ -172,7 +173,7 @@ export function HarmonicField({ ext, onExtChange, onChordClick, tonicOverride, m
                 <button
                   key={chord.id}
                   onClick={() => handleChordClick(chord)}
-                  onMouseEnter={e => { setHoveredChord(chord); (e.currentTarget as HTMLButtonElement).style.borderColor = meta.color }}
+                  onMouseEnter={e => { setHoveredChord(chord); (e.currentTarget as HTMLButtonElement).style.borderColor = meta.color; previewChord(chord.root, chord.intervals) }}
                   onMouseLeave={e => { setHoveredChord(null); (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border)' }}
                   className="btn-neumorphic flex flex-col items-center px-4 py-3 rounded-xl min-w-[72px] transition-all"
                   style={{ color: 'var(--color-ink)' }}

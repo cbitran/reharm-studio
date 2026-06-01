@@ -65,6 +65,15 @@ export async function playEvents(
   setTimeout(onEnd, totalMs + 300)
 }
 
+export async function previewChord(root: number, intervals: number[]): Promise<void> {
+  await ensureSynths()
+  if (!synth) return
+  const baseOctave = 60 // C4
+  const notes = intervals.map(i => midiToNote(baseOctave + root + i))
+  const now = Tone.now() + 0.05
+  synth.triggerAttackRelease(notes, '2n', now, 0.6)
+}
+
 export function stopAll(): void {
   synth?.releaseAll()
   Tone.Transport.cancel()
