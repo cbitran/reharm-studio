@@ -71,7 +71,7 @@ Rules:
 - Each chord must be a valid chord symbol (e.g. Fmaj9, Am11, Bbmaj9, C9sus4, Dm7, G13)
 - Use rich voicings with extensions (7th, 9th, 11th, 13th) appropriate for the style
 - The "chords" field MUST be a JSON array of exactly 4 strings
-- The "explanation" field must be 1-2 sentences in the target language
+- The "explanation" field must be 1-2 sentences in the target language, written for a music producer who may not know music theory. Describe how this progression sounds and feels — the mood, energy, and vibe. Use words a producer understands: "groove", "tension", "dark", "warm", "euphoric", "smooth", "heavy". Do NOT use theory terms like "scale", "mode", "dominant", "tonic", "ii-V-I", "tritone", "harmonic function"
 
 ${langInstruction}
 

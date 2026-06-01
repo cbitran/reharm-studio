@@ -8,14 +8,12 @@ interface Props {
 }
 
 const STEP_LABELS = [
-  'Próximo — ver a sugestão →',
-  'Próximo — explorar os acordes →',
-  'Próximo — ouvir o preview →',
+  'Quero explorar mais acordes →',
   'Entrar no studio completo →',
 ]
 
 export function GuideNarration({ step, result, onNext, onDone }: Props) {
-  const isLast = step === 3
+  const isLast = step === 1
 
   return (
     <div
@@ -34,39 +32,16 @@ export function GuideNarration({ step, result, onNext, onDone }: Props) {
         </span>
       </div>
 
-      {/* Passo 0 — Contexto capturado */}
+      {/* Passo 0 — Entrega: player + acordes + explicação */}
       {step === 0 && (
-        <div className="space-y-3">
-          <p className="font-semibold text-base" style={{ color: 'var(--color-ink)' }}>
-            Contexto capturado. Aqui está o que vou construir com você:
-          </p>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {result.song && (
-              <span className="chip font-mono text-xs px-3 py-1.5" style={{ color: 'var(--color-ink)' }}>
-                🎵 {result.song.title} · {result.song.artist}
-              </span>
-            )}
-            <span className="chip font-mono text-xs px-3 py-1.5" style={{ color: 'var(--color-primary)' }}>
-              {result.style}
-            </span>
-            <span className="chip font-mono text-xs px-3 py-1.5" style={{ color: 'var(--color-muted)' }}>
-              {result.bpm} BPM
-            </span>
-            {result.feeling.map(f => (
-              <span key={f} className="chip font-mono text-xs px-3 py-1.5" style={{ color: 'var(--color-muted)' }}>
-                {f}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Passo 1 — Sugestão de progressão */}
-      {step === 1 && (
         <div className="space-y-4">
           <p className="font-semibold text-base" style={{ color: 'var(--color-ink)' }}>
-            Minha sugestão de progressão para {result.style} a {result.bpm} BPM:
+            {result.song
+              ? `Pronto. Para o seu remix de "${result.song.title}" em ${result.style}, aqui está o que eu construí:`
+              : `Pronto. Aqui está a progressão que eu construí para ${result.style} a ${result.bpm} BPM:`}
           </p>
+
+          {/* Acordes gerados */}
           <div className="flex flex-wrap gap-2">
             {result.chords.map((chord, i) => (
               <span
@@ -78,41 +53,32 @@ export function GuideNarration({ step, result, onNext, onDone }: Props) {
               </span>
             ))}
           </div>
+
+          {/* Explicação em linguagem de produtor */}
           {result.explanation && (
             <p className="text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
               {result.explanation}
             </p>
           )}
-          <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
-            Os acordes já foram aplicados no campo abaixo. Explore outros — cada um tem sua função harmônica.
+
+          {/* Call to action para o player */}
+          <p className="text-sm font-medium" style={{ color: 'var(--color-primary)' }}>
+            ↓ Dê um play abaixo e ouça como vai soar. Mute ou solo as trilhas para ouvir cada camada separada.
           </p>
         </div>
       )}
 
-      {/* Passo 2 — Campo harmônico */}
-      {step === 2 && (
+      {/* Passo 1 — Campo Harmônico */}
+      {step === 1 && (
         <div className="space-y-2">
           <p className="font-semibold text-base" style={{ color: 'var(--color-ink)' }}>
-            Explore o campo harmônico.
+            Quer trocar algum acorde?
           </p>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
-            Clique em qualquer acorde para adicioná-lo à progressão. Os badges{' '}
+            Abaixo você vê todos os acordes que combinam com esse contexto. Clique em qualquer um para adicioná-lo
+            à sua progressão — e ouça o resultado no player. Os ícones{' '}
             <span>🟢</span><span>🟡</span><span>🔴</span>{' '}
-            mostram o quanto cada acorde encaixa no contexto de {result.style}.
-            Você pode montar sua própria variação — sem sair da zona harmônica.
-          </p>
-        </div>
-      )}
-
-      {/* Passo 3 — Preview */}
-      {step === 3 && (
-        <div className="space-y-2">
-          <p className="font-semibold text-base" style={{ color: 'var(--color-ink)' }}>
-            Ouça como vai soar.
-          </p>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>
-            Kick + acordes + baixo a {result.bpm} BPM. Mute ou solo as trilhas para ouvir cada camada.
-            Quando estiver satisfeito, exporte os MIDIs direto para sua DAW.
+            mostram o quanto cada acorde encaixa no clima do seu remix.
           </p>
         </div>
       )}
@@ -120,7 +86,7 @@ export function GuideNarration({ step, result, onNext, onDone }: Props) {
       {/* CTA */}
       <div className="flex items-center justify-between mt-5">
         <button
-          onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="text-xs"
           style={{ color: 'var(--color-muted)', opacity: 0.6 }}
         >

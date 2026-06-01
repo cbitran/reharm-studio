@@ -163,8 +163,22 @@ export default function App() {
           onDone={() => setGuideDone(true)}
         />
 
-        {/* Passo 2+: Campo Harmônico */}
-        {guideStep >= 2 && (
+        {/* Remix Preview — visível desde o passo 0 */}
+        {parsedChords.length > 0 && (
+          <section className="mb-10">
+            <UnifiedPlayer
+              pianoEvents={pe}
+              bassEvents={be}
+              bpm={bpm}
+              genre={genre}
+              genreName={genreName}
+              chords={parsedChords}
+            />
+          </section>
+        )}
+
+        {/* Campo Harmônico — aparece no passo 1 */}
+        {guideStep >= 1 && (
           <section className="mb-10">
             <HarmonicField
               ext={ext}
@@ -176,20 +190,6 @@ export default function App() {
                 const current = text.trim()
                 setText(current ? `${current} ${chord.tok}` : chord.tok)
               }}
-            />
-          </section>
-        )}
-
-        {/* Passo 3+: Remix Preview */}
-        {guideStep >= 3 && parsedChords.length > 0 && (
-          <section className="mb-10">
-            <UnifiedPlayer
-              pianoEvents={pe}
-              bassEvents={be}
-              bpm={bpm}
-              genre={genre}
-              genreName={genreName}
-              chords={parsedChords}
             />
           </section>
         )}
