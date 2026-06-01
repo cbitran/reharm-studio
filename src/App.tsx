@@ -4,7 +4,6 @@ import { reVoice, nameChord } from './core/reharmonizer'
 import { genEvents, TPQ } from './core/groove'
 import { playEvents, stopAll } from './audio/player'
 import { GENRES } from './genres'
-import { Layout } from './components/Layout'
 import { SectionHeader } from './components/SectionHeader'
 import { ChordInput } from './components/ChordInput'
 import { GenreSelector } from './components/GenreSelector'
@@ -17,7 +16,6 @@ import { ProjectBar } from './components/ProjectBar'
 import type { Extension, ViradasMode, ReharmChord } from './types'
 import type { SavedProject } from './lib/projects'
 
-const SECTION_IDS = ['acordes', 'estilo', 'progressoes', 'groove', 'grid', 'export', 'instrumentos']
 
 export default function App() {
   const [text, setText] = useState('F Am Bb C')
@@ -73,7 +71,7 @@ export default function App() {
   }
 
   return (
-    <Layout sectionIds={SECTION_IDS}>
+    <div className="max-w-[1440px] mx-auto px-8 py-10 pb-20" style={{ background: 'var(--color-bg)' }}>
 
       {/* Barra de projetos */}
       <ProjectBar
@@ -210,12 +208,6 @@ export default function App() {
         <InstrumentGuide genreName={genreName} inst={genre.inst} />
       </section>
 
-      <footer className="pt-6 border-t mt-4" style={{ borderColor: 'var(--color-border)' }}>
-        <p className="font-mono text-xs text-center" style={{ color: 'var(--color-muted)' }}>
-          Cole · estilo · progressão · groove · ouça · baixe o MIDI · arraste pro Ableton.
-        </p>
-      </footer>
-
-    </Layout>
+    </div>
   )
 }
