@@ -81,6 +81,13 @@ export function stopAll(): void {
 }
 
 let unifiedCleanup: (() => void) | null = null
+let unifiedStartMs: number | null = null
+let unifiedDurationMs: number | null = null
+
+export function getUnifiedProgress(): number | null {
+  if (unifiedStartMs === null || unifiedDurationMs === null) return null
+  return Math.min((performance.now() - unifiedStartMs) / unifiedDurationMs, 1)
+}
 
 export interface UnifiedPlayOptions {
   kickEvents: MidiEvent[]
@@ -166,10 +173,16 @@ export async function playUnified({
   const lastTick = allEvents.reduce((max, e) => Math.max(max, e.tick + e.duration), 0)
   const totalMs = lastTick * secsPerTick * 1000
 
+  // +100ms para alinhar com o offset de 0.1s do Tone.js
+  unifiedStartMs = performance.now() + 100
+  unifiedDurationMs = totalMs
+
   setTimeout(() => { stopUnified(); onEnd() }, totalMs + 300)
 }
 
 export function stopUnified(): void {
   unifiedCleanup?.()
   unifiedCleanup = null
+  unifiedStartMs = null
+  unifiedDurationMs = null
 }

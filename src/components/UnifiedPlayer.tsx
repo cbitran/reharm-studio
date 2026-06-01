@@ -1,8 +1,8 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TrackRow } from './TrackRow'
 import { genKickEvents, kickStepsForGrid } from '../core/kick-pattern'
-import { playUnified, stopUnified } from '../audio/player'
+import { playUnified, stopUnified, getUnifiedProgress } from '../audio/player'
 import type { MidiEvent, ParsedChord, GenreDefinition, Timbre, TrackId } from '../types'
 import { TPQ } from '../core/groove'
 
@@ -41,9 +41,23 @@ export function UnifiedPlayer({ pianoEvents, bassEvents, bpm, genreName, chords 
   const { t } = useTranslation()
   const [playing, setPlaying] = useState(false)
   const [loop, setLoop] = useState(false)
+  const [progress, setProgress] = useState(0)
   const [muted, setMuted] = useState<Set<TrackId>>(new Set())
   const [solo, setSolo] = useState<TrackId | null>(null)
   const [timbre, setTimbre] = useState<Timbre>('piano')
+
+  // rAF loop para atualizar o playhead enquanto toca
+  useEffect(() => {
+    if (!playing) { setProgress(0); return }
+    let id: number
+    const tick = () => {
+      const p = getUnifiedProgress()
+      if (p !== null) setProgress(p)
+      id = requestAnimationFrame(tick)
+    }
+    id = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(id)
+  }, [playing])
 
   const numBars = Math.max(chords.length, 1)
   const slug = genreName.toLowerCase().replace(/\s+/g, '')
@@ -141,6 +155,19 @@ export function UnifiedPlayer({ pianoEvents, bassEvents, bpm, genreName, chords 
         </span>
       </div>
 
+      <div className="relative">
+        {/* Playhead vertical */}
+        {playing && (
+          <div
+            className="absolute top-0 bottom-0 z-10 pointer-events-none"
+            style={{
+              left: `${progress * 100}%`,
+              width: 1.5,
+              background: 'rgba(255,255,255,0.5)',
+              boxShadow: '0 0 4px rgba(255,255,255,0.4)',
+            }}
+          />
+        )}
       <div className="space-y-1 divide-y" style={{ borderColor: 'var(--color-border)' }}>
         <TrackRow
           id="kick"
@@ -180,6 +207,7 @@ export function UnifiedPlayer({ pianoEvents, bassEvents, bpm, genreName, chords 
           bpm={bpm}
           exportName={slug}
         />
+      </div>
       </div>
     </div>
   )
