@@ -3,7 +3,8 @@ import { NOTE_NAMES } from '../core/parser'
 import { buildHarmonicField, CATEGORY_META, MOODS, EXTENSION_PRESETS, type HarmonicChord, type ChordCategory } from '../lib/harmonic-field'
 import { VoicingKeyboard } from './VoicingKeyboard'
 import { previewChord } from '../audio/player'
-import type { Extension, ParsedChord } from '../types'
+import { ChordBadge } from './ChordBadge'
+import type { Extension, ParsedChord, ChordBadgeData } from '../types'
 
 interface Props {
   ext: Extension
@@ -11,11 +12,12 @@ interface Props {
   onChordClick: (chord: ParsedChord & { name: string; reharmonizedIntervals: number[] }) => void
   tonicOverride?: number | null
   moodOverride?: string[]
+  badges?: Record<string, ChordBadgeData>
 }
 
 const TONIC_NOTES = NOTE_NAMES
 
-export function HarmonicField({ ext, onExtChange, onChordClick, tonicOverride, moodOverride }: Props) {
+export function HarmonicField({ ext, onExtChange, onChordClick, tonicOverride, moodOverride, badges = {} }: Props) {
   const [tonic, setTonic] = useState(tonicOverride ?? 5)
   const [activeMoods, setActiveMoods] = useState<string[]>(moodOverride ?? [])
 
@@ -175,9 +177,14 @@ export function HarmonicField({ ext, onExtChange, onChordClick, tonicOverride, m
                   onClick={() => handleChordClick(chord)}
                   onMouseEnter={e => { setHoveredChord(chord); (e.currentTarget as HTMLButtonElement).style.borderColor = meta.color; previewChord(chord.root, chord.intervals) }}
                   onMouseLeave={e => { setHoveredChord(null); (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border)' }}
-                  className="btn-neumorphic flex flex-col items-center px-4 py-3 rounded-xl min-w-[72px] transition-all"
+                  className="btn-neumorphic flex flex-col items-center px-4 py-3 rounded-xl min-w-[72px] transition-all relative"
                   style={{ color: 'var(--color-ink)' }}
                 >
+                  {badges[chord.name] && (
+                    <span className="absolute top-1 right-1" onClick={e => e.stopPropagation()}>
+                      <ChordBadge badge={badges[chord.name]} />
+                    </span>
+                  )}
                   <span className="font-semibold text-sm">{chord.name}</span>
                   <span className="font-mono text-[10px] mt-0.5" style={{ color: meta.color }}>
                     {chord.roman}
