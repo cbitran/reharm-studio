@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import type { Session } from '@supabase/supabase-js'
 
 export interface User {
   id: string
@@ -12,7 +14,7 @@ interface AuthContextValue {
   user: User | null
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   isLoading: boolean
 }
 
@@ -20,53 +22,54 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   login: async () => {},
   register: async () => {},
-  logout: () => {},
+  logout: async () => {},
   isLoading: false,
 })
 
-const STORAGE_KEY = 'reharm-user'
+function sessionToUser(session: Session): User {
+  const meta = session.user.user_metadata ?? {}
+  return {
+    id: session.user.id,
+    name: (meta.name as string) ?? session.user.email?.split('@')[0] ?? '',
+    email: session.user.email ?? '',
+    plan: 'free',
+    createdAt: session.user.created_at,
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) setUser(JSON.parse(stored) as User)
-    } catch {}
-    setIsLoading(false)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session ? sessionToUser(session) : null)
+      setIsLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session ? sessionToUser(session) : null)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  const login = async (email: string, _password: string) => {
-    // MVP: auth simulada — em produção integrar Supabase/Firebase
-    await new Promise(r => setTimeout(r, 600))
-    const stored = localStorage.getItem(`reharm-account-${email}`)
-    if (!stored) throw new Error('Conta não encontrada')
-    const account = JSON.parse(stored) as User
-    setUser(account)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(account))
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw new Error(error.message)
   }
 
-  const register = async (name: string, email: string, _password: string) => {
-    await new Promise(r => setTimeout(r, 600))
-    const existing = localStorage.getItem(`reharm-account-${email}`)
-    if (existing) throw new Error('E-mail já cadastrado')
-    const newUser: User = {
-      id: crypto.randomUUID(),
-      name,
+  const register = async (name: string, email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
       email,
-      plan: 'free',
-      createdAt: new Date().toISOString(),
-    }
-    localStorage.setItem(`reharm-account-${email}`, JSON.stringify(newUser))
-    setUser(newUser)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser))
+      password,
+      options: { data: { name } },
+    })
+    if (error) throw new Error(error.message)
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem(STORAGE_KEY)
+  const logout = async () => {
+    await supabase.auth.signOut()
   }
 
   return (
