@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { loadProjects, deleteProject, formatDate } from '../lib/projects'
 import { useState, useEffect } from 'react'
 import type { SavedProject } from '../lib/projects'
+import { supabase } from '../lib/supabase'
 
 export function AccountPage() {
   const { t } = useTranslation()
@@ -11,6 +12,12 @@ export function AccountPage() {
   const navigate = useNavigate()
   const [projects, setProjects] = useState<SavedProject[]>([])
   const [tab, setTab] = useState<'profile' | 'projects' | 'plan'>('profile')
+  const [showChangePassword, setShowChangePassword] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
 
   useEffect(() => {
     if (!user) { navigate('/login'); return }
@@ -18,6 +25,27 @@ export function AccountPage() {
   }, [user, navigate])
 
   if (!user) return null
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError('')
+    setPasswordSuccess(false)
+    if (newPassword !== confirmPassword) { setPasswordError(t('auth.errPasswordMismatch')); return }
+    if (newPassword.length < 6) { setPasswordError(t('auth.errPasswordShort')); return }
+    setPasswordLoading(true)
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+      setPasswordSuccess(true)
+      setNewPassword('')
+      setConfirmPassword('')
+      setTimeout(() => { setShowChangePassword(false); setPasswordSuccess(false) }, 2000)
+    } catch (err: unknown) {
+      setPasswordError(err instanceof Error ? err.message : t('auth.errReset'))
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
 
   const handleDelete = (id: string) => {
     deleteProject(id)
@@ -77,6 +105,56 @@ export function AccountPage() {
               </div>
             </div>
           ))}
+          {/* Alterar senha */}
+          <div className="pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
+            <button
+              onClick={() => { setShowChangePassword(v => !v); setPasswordError(''); setPasswordSuccess(false) }}
+              className="font-mono text-[11px] uppercase tracking-widest mb-3 flex items-center gap-2"
+              style={{ color: 'var(--color-primary)' }}
+            >
+              {t('account.changePassword')} {showChangePassword ? '▲' : '▼'}
+            </button>
+            {showChangePassword && (
+              <form onSubmit={handleChangePassword} className="space-y-3">
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  required
+                  className="input-neumorphic w-full px-4 py-3 text-sm"
+                  style={{ color: 'var(--color-ink)', fontFamily: 'inherit' }}
+                  placeholder={t('auth.resetNewPassword')}
+                />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  required
+                  className="input-neumorphic w-full px-4 py-3 text-sm"
+                  style={{ color: 'var(--color-ink)', fontFamily: 'inherit' }}
+                  placeholder={t('auth.resetConfirmPassword')}
+                />
+                {passwordError && (
+                  <p className="text-sm px-3 py-2 rounded-xl" style={{ background: 'rgba(232,138,138,0.1)', color: '#e88a8a' }}>
+                    {passwordError}
+                  </p>
+                )}
+                {passwordSuccess && (
+                  <p className="text-sm px-3 py-2 rounded-xl" style={{ background: 'rgba(100,200,100,0.1)', color: '#6dc96d' }}>
+                    {t('account.changePasswordSuccess')}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="btn-primary w-full py-2.5 text-sm font-semibold rounded-xl disabled:opacity-60"
+                >
+                  {passwordLoading ? '...' : t('account.changePasswordBtn')}
+                </button>
+              </form>
+            )}
+          </div>
+
           <div className="pt-4 border-t flex justify-between items-center" style={{ borderColor: 'var(--color-border)' }}>
             <button
               onClick={() => { logout(); navigate('/') }}

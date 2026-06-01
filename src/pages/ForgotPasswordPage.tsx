@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
 export function ForgotPasswordPage() {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
@@ -19,7 +21,7 @@ export function ForgotPasswordPage() {
       if (error) throw error
       setSent(true)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao enviar email')
+      setError(err instanceof Error ? err.message : t('auth.errForgot'))
     } finally {
       setLoading(false)
     }
@@ -35,14 +37,13 @@ export function ForgotPasswordPage() {
               Reharm Studio
             </div>
             <h1 className="font-sans text-2xl font-bold mb-3" style={{ color: 'var(--color-ink)' }}>
-              Email enviado!
+              {t('auth.forgotSentTitle')}
             </h1>
             <p className="text-sm mb-6" style={{ color: 'var(--color-muted)' }}>
-              Enviamos um link para <strong style={{ color: 'var(--color-ink)' }}>{email}</strong>.
-              <br />Clique no link para criar uma nova senha.
+              {t('auth.forgotSentMsg', { email })}
             </p>
             <Link to="/login" className="btn-primary block w-full py-3 text-sm font-semibold rounded-xl text-center">
-              Voltar para o login
+              {t('auth.backToLogin').replace('← ', '')}
             </Link>
           </div>
         </div>
@@ -59,17 +60,17 @@ export function ForgotPasswordPage() {
               Reharm Studio
             </div>
             <h1 className="font-sans text-2xl font-bold" style={{ color: 'var(--color-ink)' }}>
-              Esqueceu a senha?
+              {t('auth.forgotTitle')}
             </h1>
             <p className="text-sm mt-2" style={{ color: 'var(--color-muted)' }}>
-              Digite seu email e enviaremos um link para criar uma nova senha.
+              {t('auth.forgotSubtitle')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="font-mono text-[11px] uppercase tracking-widest block mb-2" style={{ color: 'var(--color-muted)' }}>
-                E-mail
+                {t('auth.email')}
               </label>
               <input
                 type="email"
@@ -93,13 +94,13 @@ export function ForgotPasswordPage() {
               disabled={loading}
               className="btn-primary w-full py-3 text-sm font-semibold rounded-xl mt-2 disabled:opacity-60"
             >
-              {loading ? '...' : 'Enviar link de redefinição'}
+              {loading ? '...' : t('auth.forgotBtn')}
             </button>
           </form>
 
           <div className="mt-4 text-center">
             <Link to="/login" className="text-sm" style={{ color: 'var(--color-muted)' }}>
-              ← Voltar para o login
+              {t('auth.backToLogin')}
             </Link>
           </div>
         </div>

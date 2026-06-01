@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 
 function EyeIcon({ open }: { open: boolean }) {
@@ -15,6 +16,7 @@ function EyeIcon({ open }: { open: boolean }) {
 }
 
 export function ResetPasswordPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -25,7 +27,6 @@ export function ResetPasswordPage() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    // Supabase detecta o token do link e cria sessão automaticamente
     supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') setReady(true)
     })
@@ -34,15 +35,15 @@ export function ResetPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (password !== confirm) { setError('As senhas não coincidem'); return }
-    if (password.length < 6) { setError('Senha deve ter pelo menos 6 caracteres'); return }
+    if (password !== confirm) { setError(t('auth.errPasswordMismatch')); return }
+    if (password.length < 6) { setError(t('auth.errPasswordShort')); return }
     setLoading(true)
     try {
       const { error } = await supabase.auth.updateUser({ password })
       if (error) throw error
       navigate('/conta')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao redefinir senha')
+      setError(err instanceof Error ? err.message : t('auth.errReset'))
     } finally {
       setLoading(false)
     }
@@ -53,7 +54,7 @@ export function ResetPasswordPage() {
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--color-outer-bg)' }}>
         <div className="w-full max-w-md">
           <div className="card p-8 text-center">
-            <p className="text-sm" style={{ color: 'var(--color-muted)' }}>Verificando link...</p>
+            <p className="text-sm" style={{ color: 'var(--color-muted)' }}>{t('auth.resetVerifying')}</p>
           </div>
         </div>
       </div>
@@ -69,17 +70,17 @@ export function ResetPasswordPage() {
               Reharm Studio
             </div>
             <h1 className="font-sans text-2xl font-bold" style={{ color: 'var(--color-ink)' }}>
-              Nova senha
+              {t('auth.resetTitle')}
             </h1>
             <p className="text-sm mt-2" style={{ color: 'var(--color-muted)' }}>
-              Escolha uma senha com pelo menos 6 caracteres.
+              {t('auth.resetSubtitle')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="font-mono text-[11px] uppercase tracking-widest block mb-2" style={{ color: 'var(--color-muted)' }}>
-                Nova senha
+                {t('auth.resetNewPassword')}
               </label>
               <div className="relative">
                 <input
@@ -101,7 +102,7 @@ export function ResetPasswordPage() {
 
             <div>
               <label className="font-mono text-[11px] uppercase tracking-widest block mb-2" style={{ color: 'var(--color-muted)' }}>
-                Confirmar nova senha
+                {t('auth.resetConfirmPassword')}
               </label>
               <div className="relative">
                 <input
@@ -132,7 +133,7 @@ export function ResetPasswordPage() {
               disabled={loading}
               className="btn-primary w-full py-3 text-sm font-semibold rounded-xl mt-2 disabled:opacity-60"
             >
-              {loading ? '...' : 'Salvar nova senha'}
+              {loading ? '...' : t('auth.resetBtn')}
             </button>
           </form>
         </div>

@@ -32,14 +32,14 @@ export function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (password !== confirm) { setError('As senhas não coincidem'); return }
-    if (password.length < 6) { setError('Senha deve ter pelo menos 6 caracteres'); return }
+    if (password !== confirm) { setError(t('auth.errPasswordMismatch')); return }
+    if (password.length < 6) { setError(t('auth.errPasswordShort')); return }
     setLoading(true)
     try {
       await register(name, email, password)
       setSuccess(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao criar conta')
+      setError(err instanceof Error ? err.message : t('auth.errRegister'))
     } finally {
       setLoading(false)
     }
