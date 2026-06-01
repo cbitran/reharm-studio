@@ -5,12 +5,20 @@
 export const config = { runtime: 'edge' }
 
 
-async function analyzeWithGroq(apiKey: string, artist: string, title: string, targetStyle: string, targetBpm: number) {
-  const prompt = `Você é especialista em teoria musical e produção de dance music.
+const LANG_INSTRUCTION: Record<string, string> = {
+  en: 'Respond entirely in English.',
+  es: 'Responde completamente en español.',
+  'pt-BR': 'Responda completamente em português do Brasil.',
+}
 
-Analise a música "${title}" de ${artist}.
+async function analyzeWithGroq(apiKey: string, artist: string, title: string, targetStyle: string, targetBpm: number, lang: string) {
+  const langKey = LANG_INSTRUCTION[lang] ?? LANG_INSTRUCTION[lang.split('-')[0]] ?? LANG_INSTRUCTION['pt-BR']
 
-Responda SOMENTE com JSON válido, sem markdown, sem texto extra:
+  const prompt = `You are a music theory and dance music production expert. ${langKey}
+
+Analyze the song "${title}" by ${artist}.
+
+Respond ONLY with valid JSON, no markdown, no extra text:
 {
   "key": "F",
   "mode": "maior",
@@ -83,8 +91,8 @@ export default async function handler(req: Request) {
   }
 
   try {
-    const body = await req.json() as { artist?: string; title?: string; targetStyle?: string; targetBpm?: number }
-    const { artist, title, targetStyle = 'House', targetBpm = 124 } = body
+    const body = await req.json() as { artist?: string; title?: string; targetStyle?: string; targetBpm?: number; lang?: string }
+    const { artist, title, targetStyle = 'House', targetBpm = 124, lang = 'pt-BR' } = body
 
     if (!artist || !title) {
       return new Response(JSON.stringify({ error: 'artist e title são obrigatórios' }), {
@@ -96,7 +104,7 @@ export default async function handler(req: Request) {
     const groqKey = process.env.GROQ_API_KEY
     if (!groqKey) throw new Error('GROQ_API_KEY não configurada')
 
-    const analysis = await analyzeWithGroq(groqKey, artist, title, targetStyle, targetBpm)
+    const analysis = await analyzeWithGroq(groqKey, artist, title, targetStyle, targetBpm, lang)
 
     return new Response(
       JSON.stringify({ ...analysis }),

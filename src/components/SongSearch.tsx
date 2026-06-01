@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { HelpIcon } from './ui/Tooltip'
 
 interface SpotifySuggestion {
@@ -44,6 +45,7 @@ const SECTION_COLORS: Record<string, string> = {
 }
 
 export function SongSearch({ onAnalysis, targetStyle, targetBpm }: Props) {
+  const { t, i18n } = useTranslation()
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<SpotifySuggestion[]>([])
   const [selected, setSelected] = useState<SpotifySuggestion | null>(null)
@@ -113,14 +115,15 @@ export function SongSearch({ onAnalysis, targetStyle, targetBpm }: Props) {
           title: selected.title,
           targetStyle,
           targetBpm,
+          lang: i18n.language,
         }),
       })
-      if (!res.ok) throw new Error('Erro ao analisar música')
+      if (!res.ok) throw new Error(t('analysis.error'))
       const data = await res.json() as SongAnalysis
       setResult(data)
       onAnalysis(data, data.progression)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido')
+      setError(err instanceof Error ? err.message : t('analysis.unknownError'))
     } finally {
       setAnalyzing(false)
     }
@@ -131,7 +134,7 @@ export function SongSearch({ onAnalysis, targetStyle, targetBpm }: Props) {
       <div className="card p-5">
         <div className="flex items-center gap-2 mb-4">
           <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-muted)' }}>
-            Buscar música
+            {t('sections.search')}
           </p>
           <HelpIcon tip="Digite o nome da música ou artista. Selecione nas sugestões e clique em Analisar para gerar o guia do remix." />
         </div>
@@ -216,9 +219,9 @@ export function SongSearch({ onAnalysis, targetStyle, targetBpm }: Props) {
           >
             {analyzing ? (
               <span className="flex items-center gap-2">
-                <span className="animate-spin inline-block">◌</span> Analisando...
+                <span className="animate-spin inline-block">◌</span> {t('analysis.analyzing')}
               </span>
-            ) : 'Analisar música'}
+            ) : t('analysis.analyzeBtn')}
           </button>
         </div>
 
@@ -235,7 +238,7 @@ export function SongSearch({ onAnalysis, targetStyle, targetBpm }: Props) {
             </div>
             <span className="ml-auto font-mono text-[10px] px-2 py-1 rounded-full"
               style={{ background: 'var(--color-primary)', color: 'var(--color-bg)' }}>
-              selecionada
+              {t('analysis.selected')}
             </span>
           </div>
         )}
@@ -278,7 +281,7 @@ export function SongSearch({ onAnalysis, targetStyle, targetBpm }: Props) {
             <div className="space-y-3">
               <div>
                 <p className="font-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--color-muted)' }}>
-                  Progressão principal
+                  {t('analysis.mainProgression')}
                 </p>
                 <p className="font-sans font-semibold text-base" style={{ color: 'var(--color-ink)' }}>
                   {result.progression}
@@ -291,7 +294,7 @@ export function SongSearch({ onAnalysis, targetStyle, targetBpm }: Props) {
               {result.borrowed_chords?.length > 0 && (
                 <div>
                   <p className="font-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: 'var(--color-muted)' }}>
-                    Acordes disponíveis para remix
+                    {t('analysis.availableChords')}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {result.borrowed_chords.map((c, i) => (
@@ -308,7 +311,7 @@ export function SongSearch({ onAnalysis, targetStyle, targetBpm }: Props) {
           {/* Guia do remix */}
           <div className="card p-5">
             <p className="font-mono text-[10px] uppercase tracking-widest mb-4" style={{ color: 'var(--color-muted)' }}>
-              Guia do Remix — {result.remix_guide.style} · {result.remix_guide.bpm} BPM
+              {t('analysis.remixGuide', { style: result.remix_guide.style, bpm: result.remix_guide.bpm })}
             </p>
 
             <div className="space-y-0 mb-5">
@@ -329,7 +332,7 @@ export function SongSearch({ onAnalysis, targetStyle, targetBpm }: Props) {
 
             <div className="mb-4">
               <p className="font-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: 'var(--color-muted)' }}>
-                Instrumentos
+                {t('analysis.instruments')}
               </p>
               {result.remix_guide.instruments.map((inst, i) => (
                 <div key={i} className="flex gap-3 py-1.5">
@@ -344,7 +347,7 @@ export function SongSearch({ onAnalysis, targetStyle, targetBpm }: Props) {
             {result.remix_guide.tips?.length > 0 && (
               <div>
                 <p className="font-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: 'var(--color-muted)' }}>
-                  Dicas
+                  {t('analysis.tips')}
                 </p>
                 {result.remix_guide.tips.map((tip, i) => (
                   <p key={i} className="text-sm flex gap-2 mb-1.5" style={{ color: 'var(--color-muted)' }}>

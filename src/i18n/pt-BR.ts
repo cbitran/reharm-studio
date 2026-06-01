@@ -104,4 +104,16 @@ export default {
     title: 'Política de Reembolso',
     lastUpdated: 'Última atualização: junho de 2026',
   },
+  analysis: {
+    analyzeBtn: 'Analisar música',
+    analyzing: 'Analisando...',
+    selected: 'selecionada',
+    mainProgression: 'Progressão principal',
+    availableChords: 'Acordes disponíveis para remix',
+    remixGuide: 'Guia do Remix — {{style}} · {{bpm}} BPM',
+    instruments: 'Instrumentos',
+    tips: 'Dicas',
+    error: 'Erro ao analisar música',
+    unknownError: 'Erro desconhecido',
+  },
 }

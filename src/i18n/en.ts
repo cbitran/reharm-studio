@@ -104,4 +104,16 @@ export default {
     title: 'Refund Policy',
     lastUpdated: 'Last updated: June 2026',
   },
+  analysis: {
+    analyzeBtn: 'Analyze song',
+    analyzing: 'Analyzing...',
+    selected: 'selected',
+    mainProgression: 'Main progression',
+    availableChords: 'Chords available for remix',
+    remixGuide: 'Remix Guide — {{style}} · {{bpm}} BPM',
+    instruments: 'Instruments',
+    tips: 'Tips',
+    error: 'Error analyzing song',
+    unknownError: 'Unknown error',
+  },
 }
