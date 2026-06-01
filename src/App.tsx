@@ -13,7 +13,9 @@ import { StepGrid } from './components/StepGrid'
 import { ExportButtons } from './components/ExportButtons'
 import { InstrumentGuide } from './components/InstrumentGuide'
 import { ProgressionGallery } from './components/ProgressionGallery'
+import { ProjectBar } from './components/ProjectBar'
 import type { Extension, ViradasMode, ReharmChord, ParsedChord } from './types'
+import type { SavedProject } from './lib/projects'
 
 const SECTION_IDS = ['acordes', 'estilo', 'progressoes', 'groove', 'grid', 'export', 'instrumentos']
 
@@ -67,8 +69,24 @@ export default function App() {
     setText(chords.map(c => c.tok).join(' '))
   }
 
+  const handleLoadProject = (project: SavedProject) => {
+    setText(project.text)
+    setGenreName(project.genreName)
+    setExtOverride(project.extOverride)
+    setBpmOverride(project.bpmOverride)
+    setSwing(project.swing)
+    setViradas(project.viradas)
+    setSelectedSkeletonId(project.selectedSkeletonId)
+  }
+
   return (
     <Layout sectionIds={SECTION_IDS}>
+
+      {/* Barra de projetos */}
+      <ProjectBar
+        state={{ text, genreName, extOverride, bpmOverride, swing, viradas, selectedSkeletonId }}
+        onLoad={handleLoadProject}
+      />
 
       {/* Header */}
       <header className="mb-10">
