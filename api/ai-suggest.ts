@@ -65,14 +65,18 @@ Desired feeling: ${session.feeling.join(', ') || 'not specified'}
 ${chordsContext}
 ${intentionContext}
 
-Suggest a 4-chord progression that fits this context perfectly.
+Task: suggest exactly 4 chord names that form a progression fitting the context above.
 
-IMPORTANT: ${langInstruction}
-Respond ONLY with valid JSON, no markdown, no extra text:
-{
-  "chords": ["Fmaj9", "Am11", "Bbmaj9", "C9sus4"],
-  "explanation": "Two sentences explaining why this progression works for this style and feeling."
-}`
+Rules:
+- Each chord must be a valid chord symbol (e.g. Fmaj9, Am11, Bbmaj9, C9sus4, Dm7, G13)
+- Use rich voicings with extensions (7th, 9th, 11th, 13th) appropriate for the style
+- The "chords" field MUST be a JSON array of exactly 4 strings
+- The "explanation" field must be 1-2 sentences in the target language
+
+${langInstruction}
+
+You MUST respond with ONLY this exact JSON structure — no markdown, no extra keys, no wrapping:
+{"chords":["chord1","chord2","chord3","chord4"],"explanation":"your explanation here"}`
 
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -94,16 +98,36 @@ Respond ONLY with valid JSON, no markdown, no extra text:
     }
 
     const data = await res.json() as { choices: { message: { content: string } }[] }
-    const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? '{}') as {
-      chords?: string[]
-      explanation?: string
+    const content = data.choices?.[0]?.message?.content ?? '{}'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsed = JSON.parse(content) as Record<string, any>
+
+    // Parsing robusto: aceita variações de chave que o modelo às vezes retorna
+    const rawChords =
+      parsed.chords ??
+      parsed.chord_progression ??
+      parsed.progression?.chords ??
+      parsed.progression ??
+      []
+
+    // Normaliza: se vier string separada por espaço/traço, divide em array
+    let chords: string[]
+    if (Array.isArray(rawChords)) {
+      chords = rawChords.map(String).filter(Boolean)
+    } else if (typeof rawChords === 'string') {
+      chords = rawChords.split(/[\s–—-]+/).map(s => s.trim()).filter(Boolean)
+    } else {
+      chords = []
     }
 
+    const explanation: string =
+      parsed.explanation ??
+      parsed.description ??
+      parsed.reasoning ??
+      ''
+
     return new Response(
-      JSON.stringify({
-        chords: parsed.chords ?? [],
-        explanation: parsed.explanation ?? '',
-      }),
+      JSON.stringify({ chords, explanation }),
       { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } },
     )
   } catch (err) {
