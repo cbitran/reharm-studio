@@ -110,15 +110,34 @@ export function TrackRow({
       <div className="flex-1 flex gap-px">
         {Array.from({ length: STEPS }, (_, i) => {
           const active = activeSet.has(i)
+          if (isKick) {
+            return (
+              <div
+                key={i}
+                className="flex-1 flex items-center justify-center"
+                style={{ height: 16, borderLeft: i % 4 === 0 ? '1px solid rgba(128,128,128,0.15)' : undefined }}
+              >
+                <div
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: active ? color : 'var(--color-border)',
+                    opacity: active ? 1 : 0.35,
+                    transition: 'opacity 0.15s',
+                  }}
+                />
+              </div>
+            )
+          }
           return (
             <div
               key={i}
               className="flex-1 rounded-sm transition-all"
               style={{
-                height: isKick ? 8 : 16,
+                height: 16,
                 background: active ? color : 'var(--color-border)',
-                opacity: active ? (isKick ? 1 : 0.8) : 0.35,
-                borderRadius: isKick && active ? '50%' : undefined,
+                opacity: active ? 0.8 : 0.35,
                 borderLeft: i % 4 === 0 ? '1px solid rgba(128,128,128,0.15)' : undefined,
               }}
             />
