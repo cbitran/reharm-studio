@@ -4,50 +4,11 @@
 
 export const config = { runtime: 'edge' }
 
-const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
-async function getSpotifyToken(clientId: string, clientSecret: string): Promise<string> {
-  const res = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
-    },
-    body: 'grant_type=client_credentials',
-  })
-  const data = await res.json() as { access_token: string }
-  return data.access_token
-}
-
-async function getSpotifyData(token: string, artist: string, title: string) {
-  const q = encodeURIComponent(`track:${title} artist:${artist}`)
-  const search = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  const sData = await search.json() as { tracks: { items: { id: string }[] } }
-  const track = sData.tracks?.items?.[0]
-  if (!track) return null
-
-  const featRes = await fetch(`https://api.spotify.com/v1/audio-features/${track.id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!featRes.ok) return null
-  const feat = await featRes.json() as { key: number; mode: number; tempo: number; energy: number; danceability: number }
-  return {
-    key: NOTE_NAMES[feat.key] ?? 'C',
-    mode: feat.mode === 1 ? 'maior' : 'menor',
-    bpm: Math.round(feat.tempo),
-    energy: feat.energy,
-    danceability: feat.danceability,
-  }
-}
-
-async function analyzeWithGemini(apiKey: string, artist: string, title: string, spotify: { key: string; mode: string; bpm: number } | null, targetStyle: string, targetBpm: number) {
-  const spotifyCtx = spotify ? `Dados confirmados pelo Spotify: tonalidade ${spotify.key} ${spotify.mode}, BPM ${spotify.bpm}.` : ''
-
+async function analyzeWithGroq(apiKey: string, artist: string, title: string, targetStyle: string, targetBpm: number) {
   const prompt = `Você é especialista em teoria musical e produção de dance music.
 
-Analise a música "${title}" de ${artist}. ${spotifyCtx}
+Analise a música "${title}" de ${artist}.
 
 Responda SOMENTE com JSON válido, sem markdown, sem texto extra:
 {
@@ -82,28 +43,28 @@ Responda SOMENTE com JSON válido, sem markdown, sem texto extra:
   }
 }`
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.3 },
-      }),
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
     },
-  )
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+    }),
+  })
 
   if (!res.ok) {
     const err = await res.text()
-    throw new Error(`Gemini error: ${res.status} — ${err}`)
+    throw new Error(`Groq error: ${res.status} — ${err}`)
   }
 
-  const data = await res.json() as { candidates: { content: { parts: { text: string }[] } }[] }
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
-  // Remove possível markdown wrapper
-  const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-  return JSON.parse(clean)
+  const data = await res.json() as { choices: { message: { content: string } }[] }
+  const text = data.choices?.[0]?.message?.content ?? '{}'
+  return JSON.parse(text)
 }
 
 export default async function handler(req: Request) {
@@ -132,25 +93,13 @@ export default async function handler(req: Request) {
       })
     }
 
-    const geminiKey = process.env.GEMINI_API_KEY
-    const spotifyId = process.env.SPOTIFY_CLIENT_ID
-    const spotifySecret = process.env.SPOTIFY_CLIENT_SECRET
+    const groqKey = process.env.GROQ_API_KEY
+    if (!groqKey) throw new Error('GROQ_API_KEY não configurada')
 
-    if (!geminiKey) throw new Error('GEMINI_API_KEY não configurada')
-
-    // Spotify (opcional)
-    let spotifyData = null
-    if (spotifyId && spotifySecret) {
-      try {
-        const token = await getSpotifyToken(spotifyId, spotifySecret)
-        spotifyData = await getSpotifyData(token, artist, title)
-      } catch { /* continua sem Spotify */ }
-    }
-
-    const analysis = await analyzeWithGemini(geminiKey, artist, title, spotifyData, targetStyle, targetBpm)
+    const analysis = await analyzeWithGroq(groqKey, artist, title, targetStyle, targetBpm)
 
     return new Response(
-      JSON.stringify({ ...analysis, spotify: spotifyData }),
+      JSON.stringify({ ...analysis }),
       { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } },
     )
   } catch (err) {
