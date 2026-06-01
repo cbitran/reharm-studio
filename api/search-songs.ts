@@ -19,7 +19,12 @@ async function getSpotifyToken(clientId: string, clientSecret: string): Promise<
     },
     body: 'grant_type=client_credentials',
   })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Spotify token error ${res.status}: ${text}`)
+  }
   const data = await res.json() as SpotifyToken
+  if (!data.access_token) throw new Error('Spotify: token vazio')
   return data.access_token
 }
 

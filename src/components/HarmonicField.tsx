@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { NOTE_NAMES } from '../core/parser'
 import { buildHarmonicField, CATEGORY_META, MOODS, EXTENSION_PRESETS, type HarmonicChord, type ChordCategory } from '../lib/harmonic-field'
 import { VoicingKeyboard } from './VoicingKeyboard'
@@ -8,13 +8,18 @@ interface Props {
   ext: Extension
   onExtChange: (e: Extension) => void
   onChordClick: (chord: ParsedChord & { name: string; reharmonizedIntervals: number[] }) => void
+  tonicOverride?: number | null
+  moodOverride?: string[]
 }
 
 const TONIC_NOTES = NOTE_NAMES
 
-export function HarmonicField({ ext, onExtChange, onChordClick }: Props) {
-  const [tonic, setTonic] = useState(5) // F por padrão
-  const [activeMoods, setActiveMoods] = useState<string[]>([])
+export function HarmonicField({ ext, onExtChange, onChordClick, tonicOverride, moodOverride }: Props) {
+  const [tonic, setTonic] = useState(tonicOverride ?? 5)
+  const [activeMoods, setActiveMoods] = useState<string[]>(moodOverride ?? [])
+
+  useEffect(() => { if (tonicOverride != null) setTonic(tonicOverride) }, [tonicOverride])
+  useEffect(() => { if (moodOverride?.length) setActiveMoods(moodOverride) }, [moodOverride?.join(',')])
   const [hoveredChord, setHoveredChord] = useState<HarmonicChord | null>(null)
   const [activeCategories, setActiveCategories] = useState<ChordCategory[]>(['diatonic', 'borrowed', 'sus', 'secondary'])
 

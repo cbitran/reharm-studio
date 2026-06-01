@@ -19,6 +19,23 @@ import type { Extension, ViradasMode, ReharmChord } from './types'
 import type { SavedProject } from './lib/projects'
 
 
+// Converte nome de nota para número (C=0, F=5, etc.)
+const KEY_TO_NUM: Record<string, number> = {
+  C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11
+}
+
+// Extensão recomendada por estilo
+const STYLE_EXT: Record<string, Extension> = {
+  'House':'7','Deep House':'9','Gospel House':'9','Afro House':'9',
+  'Lo-fi':'7','Jazz':'9','Pop':'tri','Techno':'tri',
+}
+
+// Mood recomendado por estilo
+const STYLE_MOOD: Record<string, string[]> = {
+  'House':['groovy'],'Deep House':['jazzy','suspended'],'Gospel House':['soulful','uplifting'],
+  'Afro House':['tribal','groovy'],'Lo-fi':['suspended'],'Jazz':['jazzy'],'Techno':['dark'],
+}
+
 export default function App() {
   const { t } = useTranslation()
   const [text, setText] = useState('F Am Bb C')
@@ -29,6 +46,8 @@ export default function App() {
   const [viradas, setViradas] = useState<ViradasMode>('antecip')
   const [playing, setPlaying] = useState(false)
   const [selectedSkeletonId, setSelectedSkeletonId] = useState<string | null>(null)
+  const [autoTonic, setAutoTonic] = useState<number | null>(null)
+  const [autoMoods, setAutoMoods] = useState<string[]>([])
 
   const genre = GENRES[genreName]!
   const ext = extOverride ?? genre.ext
@@ -90,9 +109,25 @@ export default function App() {
           subtitle={t('sections.searchHint', 'Digite o artista e a música que quer remixar. O sistema identifica a tonalidade e gera o guia do remix.')}
         />
         <SongSearch
-          onAnalysis={(analysis: SongAnalysis, chords: string) => {
-            setText(chords)
+          onAnalysis={(analysis: SongAnalysis) => {
+            // Preenche acordes
+            setText(analysis.progression)
+            // Ajusta BPM para o estilo alvo
             if (analysis.remix_guide?.bpm) setBpmOverride(analysis.remix_guide.bpm)
+            // Seleciona extensão ideal para o estilo
+            const suggestedExt = STYLE_EXT[analysis.remix_guide?.style ?? genreName]
+            if (suggestedExt) setExtOverride(suggestedExt)
+            // Define tonalidade no campo harmônico
+            const tonicNum = KEY_TO_NUM[analysis.key]
+            if (tonicNum !== undefined) setAutoTonic(tonicNum)
+            // Ativa moods compatíveis
+            const moods = STYLE_MOOD[analysis.remix_guide?.style ?? genreName] ?? []
+            setAutoMoods(moods)
+            // Ativa viradas para estilos que precisam de groove
+            if (['House','Deep House','Gospel House','Afro House'].includes(analysis.remix_guide?.style ?? '')) {
+              setViradas('antecip')
+              setSwing(58)
+            }
           }}
           targetStyle={genreName}
           targetBpm={bpm}
@@ -151,6 +186,8 @@ export default function App() {
         <HarmonicField
           ext={ext}
           onExtChange={setExtOverride}
+          tonicOverride={autoTonic}
+          moodOverride={autoMoods}
           onChordClick={chord => {
             const current = text.trim()
             setText(current ? `${current} ${chord.tok}` : chord.tok)
