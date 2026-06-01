@@ -21,6 +21,7 @@ import type { SavedProject } from './lib/projects'
 import { useAI } from './contexts/AIContext'
 import { AIWizard } from './components/AIWizard'
 import { AIPanel } from './components/AIPanel'
+import { InlineWizard, type InlineWizardResult } from './components/InlineWizard'
 
 
 // Converte nome de nota para número (C=0, F=5, etc.)
@@ -59,6 +60,9 @@ export default function App() {
 
   const { updateSession, badges } = useAI()
 
+  // Controla se o inline wizard de entrada já foi concluído
+  const [inlineWizardDone, setInlineWizardDone] = useState(false)
+
   // Sincroniza estado do App com o AIContext para que a IA sempre tenha o snapshot atual
   useEffect(() => {
     updateSession({
@@ -70,6 +74,18 @@ export default function App() {
 
   const handleAIApply = useCallback((suggestedChords: string[]) => {
     setText(suggestedChords.join(' '))
+  }, [])
+
+  const handleInlineWizardComplete = useCallback((result: InlineWizardResult) => {
+    // Aplica a sugestão da IA na interface
+    setText(result.chords.join(' '))
+    if (GENRES[result.style]) {
+      setGenreName(result.style)
+      setExtOverride(STYLE_EXT[result.style] ?? null)
+    }
+    setBpmOverride(result.bpm)
+    if (STYLE_MOOD[result.style]) setAutoMoods(STYLE_MOOD[result.style])
+    setInlineWizardDone(true)
   }, [])
 
   const { chords: parsedChords, bad } = useMemo(() => parseProg(text), [text])
@@ -109,6 +125,20 @@ export default function App() {
     setSwing(project.swing)
     setViradas(project.viradas)
     setSelectedSkeletonId(project.selectedSkeletonId)
+  }
+
+  // Inline wizard como tela de entrada — substitui as seções quando não concluído
+  if (!inlineWizardDone) {
+    return (
+      <div className="max-w-[1440px] mx-auto px-8" style={{ background: 'var(--color-bg)' }}>
+        <InlineWizard
+          onComplete={handleInlineWizardComplete}
+          onSkip={() => setInlineWizardDone(true)}
+        />
+        <AIWizard />
+        <AIPanel onApply={handleAIApply} />
+      </div>
+    )
   }
 
   return (
