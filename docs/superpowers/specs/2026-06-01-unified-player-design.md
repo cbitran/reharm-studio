@@ -1,30 +1,31 @@
-# Reharm Player — Visão Unificada
+# Remix Preview — Visão Unificada de Trilhas
 
 **Data:** 2026-06-01  
-**Status:** Aprovado
+**Status:** Aprovado (revisado)
 
 ## Problema
 
-O app gera progressões harmônicas e exporta MIDI, mas o preview de áudio é uma caixa preta — o usuário ouve tudo junto sem controle por trilha. Não há kick/metrônomo visual, não há como isolar piano, baixo ou harmonia separadamente.
+O app gera progressões harmônicas e exporta MIDI, mas o preview de áudio é uma caixa preta — o usuário ouve tudo junto sem controle por trilha. Não há referência rítmica visual, não há como isolar piano ou baixo para entender como cada instrumento se comportará no remix.
 
 ## Solução
 
-Nova seção **"Player"** com trilhas empilhadas, kick como referência rítmica, controles de solo/mute por trilha e seletor de timbre na trilha harmônica.
+Nova seção **"Remix Preview"** — uma sugestão de arranjo pronta para ouvir, validar e exportar por instrumento. O usuário ouve como ficaria o remix com kick de referência, acorda e baixo, sola/muta as camadas, e exporta os MIDIs que quer usar na DAW.
 
 ## Escopo
 
 **Inclui:**
-- Kick track (4-on-the-floor ou half-time por gênero)
-- Chords track (notas do piano re-roteadas para timbre selecionável)
-- Bass track (eventos existentes do `genEvents()`)
-- Mute por trilha (silencia a trilha no playback)
+- Kick track — metrônomo visual e sonoro (4-on-the-floor ou half-time por gênero). **Não exportável** — é só referência de tempo.
+- Chords track — notas harmônicas com seletor de timbre (Pad | Pluck | Lead | Piano). **Export MIDI** por trilha.
+- Bass track — linha de baixo gerada pelo `genEvents()`. **Export MIDI** por trilha.
+- Mute por trilha (silencia no playback)
 - Solo por trilha (silencia todas as outras)
 - Seletor de timbre na trilha Chords: Pad | Pluck | Lead | Piano
 - Grid visual de 16 steps por barra (igual ao StepGrid existente)
+- Botão ↓ MIDI por trilha (Chords e Bass apenas)
 
 **Não inclui:**
+- Export MIDI do Kick (é metrônomo, não composição)
 - Edição de notas
-- Exportação separada por trilha (já coberto pelo ExportButtons)
 - Geração de novas notas além das já existentes
 - Strings ou outros instrumentos além dos 3 definidos
 
@@ -119,9 +120,13 @@ Mapeado por `genreName` em `kick-pattern.ts`.
 [ ▶ Play ]  [ ■ Stop ]   BPM: 120
 
   Kick    [M][S]  ● · · · ● · · · ● · · · ● · · ·
-  Chords  [M][S]  [Pad ▾] ██ · · █ · · ██ · · █ · ·
-  Bass    [M][S]  █ · · · · █ · · · · █ · · · · █ ·
+  Chords  [M][S]  [Pad ▾] ██ · · █ · · ██ · · █ · ·  [↓ MIDI]
+  Bass    [M][S]  █ · · · · █ · · · · █ · · · · █ ·  [↓ MIDI]
 ```
+
+- Kick: sem botão de export — é referência rítmica apenas
+- Chords e Bass: botão ↓ MIDI exporta a trilha individualmente
+- O export por trilha usa a lógica existente do `midi-writer.ts`
 
 - Trilha mutada: opacidade 40%, label riscado
 - Trilha em solo: badge "SOLO" destacado com cor primária
