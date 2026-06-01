@@ -183,3 +183,59 @@ Sistema sugere:
 - `Fmaj9 – Ebmaj7 – Bbmaj9 – C9` — modal/afro
 
 Exporta: piano, bass, strings — por seção — prontos pro Ableton.
+
+---
+
+## UX Redesign — Brainstorming 01/06/2026
+
+### Visão do produto v2
+
+Co-criação musical assistida por IA. O sistema é um parceiro criativo que entra quando chamado — não um modo separado.
+
+### Os três perfis (um só fluxo)
+
+| Perfil | Comportamento |
+|---|---|
+| Expert Solo | Nunca chama a IA. Usa ferramentas direto. |
+| Collab Total | Chama a IA logo no início, antes de qualquer escolha. |
+| Híbrido | Começa sozinho, chama a IA quando trava. |
+
+### Fluxo principal (Seção 1 — APROVADA)
+
+**Estado inicial: sempre Solo**
+Usuário entra com acesso direto a todas as ferramentas. Sem wizard, sem bloqueio.
+
+**Botão "Chamar IA" — sempre visível**
+Fixo, discreto. Ao clicar, IA lê o estado atual e entra como parceira a partir dali.
+
+**IA no início (zero state) — Wizard:**
+1. "Qual música?" → busca iTunes + análise Groq (guarda, não exibe)
+2. "Que estilo?" → chips
+3. "Que BPM?" → slider com sugestão
+4. "Qual feeling?" → chips (Groovy, Soulful, Dark, Tribal, Jazzy...)
+5. IA cruza análise da música + intenção do usuário → gera sugestão via Groq
+
+**IA no meio (estado parcial):**
+Lê silenciosamente: música, acordes, estilo, BPM, campo harmônico.
+Responde com contexto: *"Vejo que você está em Ré menor, House a 124 BPM..."*
+
+**Entrega:**
+Remix Preview + Campo Harmônico com badges por acorde:
+- 🟢 Ótima escolha
+- 🟡 Funciona com ressalva
+- 🔴 Foge do contexto
+Clicar no badge → explicação de 2 linhas do Groq.
+
+### Seções pendentes (escrever na próxima sessão)
+- Seção 2: Botão "Chamar IA" — posição, estados
+- Seção 3: Wizard detalhado
+- Seção 4: Context-awareness quando IA entra no meio
+- Seção 5: Tela de resultado/sugestão
+- Seção 6: Campo Harmônico com AI Coach
+- Seção 7: Remix Preview (sem mudanças estruturais)
+- Seção 8: O que não muda
+
+### Implicação técnica principal
+`analyze-song.ts` precisa receber style + BPM + feeling do usuário.
+O prompt do Groq deve cruzar análise da música + intenção → progressão personalizada.
+Spec do plano de implementação: `docs/superpowers/plans/` (ainda não escrito).
