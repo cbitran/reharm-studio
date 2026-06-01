@@ -9,7 +9,7 @@ export default {
   hero: {
     kicker: 'Acordes → MIDI por Estilo',
     title: 'Reharm Studio',
-    subtitle: 'Cole os acordes da música, escolha o estilo e o groove, e baixe o MIDI pronto pro Ableton.',
+    subtitle: 'Cole os acordes da música, escolha o estilo e o groove, e baixe o MIDI pronto para sua DAW.',
   },
   sections: {
     search: 'Buscar música',
@@ -86,7 +86,7 @@ export default {
     savedOn: 'Salvo em',
   },
   footer: {
-    tagline: 'Cole · estilo · progressão · groove · ouça · baixe o MIDI · arraste pro Ableton.',
+    tagline: 'Cole · estilo · progressão · groove · ouça · baixe o MIDI · arraste para sua DAW.',
     privacy: 'Privacidade',
     terms: 'Termos',
     refund: 'Reembolso',
