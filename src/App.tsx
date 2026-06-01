@@ -12,9 +12,9 @@ import { GrooveControls } from './components/GrooveControls'
 import { StepGrid } from './components/StepGrid'
 import { ExportButtons } from './components/ExportButtons'
 import { InstrumentGuide } from './components/InstrumentGuide'
-import { ProgressionGallery } from './components/ProgressionGallery'
+import { HarmonicField } from './components/HarmonicField'
 import { ProjectBar } from './components/ProjectBar'
-import type { Extension, ViradasMode, ReharmChord, ParsedChord } from './types'
+import type { Extension, ViradasMode, ReharmChord } from './types'
 import type { SavedProject } from './lib/projects'
 
 const SECTION_IDS = ['acordes', 'estilo', 'progressoes', 'groove', 'grid', 'export', 'instrumentos']
@@ -44,8 +44,6 @@ export default function App() {
     [parsedChords, ext],
   )
 
-  const tonic = parsedChords[0]?.root ?? null
-
   const { pe, be } = useMemo(() => {
     if (!parsedChords.length) return { pe: [], be: [] }
     return genEvents(parsedChords, ext, genre, swing / 100, viradas)
@@ -62,11 +60,6 @@ export default function App() {
     setGenreName(g)
     setExtOverride(null)
     setBpmOverride(null)
-  }
-
-  const handleGallerySelect = (chords: ParsedChord[], skeleton: { id: string }) => {
-    setSelectedSkeletonId(skeleton.id)
-    setText(chords.map(c => c.tok).join(' '))
   }
 
   const handleLoadProject = (project: SavedProject) => {
@@ -131,19 +124,20 @@ export default function App() {
         />
       </section>
 
-      {/* 03 — Progressões */}
+      {/* 03 — Campo Harmônico */}
       <section id="progressoes" className="mb-10 scroll-mt-6">
         <SectionHeader
           number="03"
-          title={`Progressões — ${genreName}`}
-          subtitle="Esqueletos curados transpostos para a sua tonalidade. Clique para usar como base."
+          title="Campo Harmônico"
+          subtitle="Escolha a tonalidade e clique nos acordes para montar sua progressão. Nunca vai errar."
         />
-        <ProgressionGallery
-          tonic={tonic}
-          genreName={genreName}
+        <HarmonicField
           ext={ext}
-          onSelect={handleGallerySelect}
-          selectedId={selectedSkeletonId}
+          onExtChange={setExtOverride}
+          onChordClick={chord => {
+            const current = text.trim()
+            setText(current ? `${current} ${chord.tok}` : chord.tok)
+          }}
         />
       </section>
 
