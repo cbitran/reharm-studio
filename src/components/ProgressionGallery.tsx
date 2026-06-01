@@ -93,7 +93,7 @@ export function ProgressionGallery({ tonic, genreName, ext, onSelect, selectedId
               {chords.map((c, i) => (
                 <span key={i} className="flex items-center gap-1">
                   <span
-                    className="font-serif text-lg font-normal"
+                    className="font-sans text-base font-semibold"
                     style={{ color: 'var(--color-ink)' }}
                   >
                     {c.name}

@@ -6,9 +6,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        serif: ['"Instrument Serif"', 'serif'],
+        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
-        sans: ['Inter', 'sans-serif'],
+        serif: ['"Plus Jakarta Sans"', 'sans-serif'], // alias — sem serifadas
       },
       colors: {
         bg:      'var(--color-bg)',

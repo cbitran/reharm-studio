@@ -14,7 +14,7 @@ export function SectionHeader({ number, title, subtitle }: Props) {
         >
           {number}
         </span>
-        <h2 className="font-serif text-3xl font-normal" style={{ color: 'var(--color-ink)' }}>
+        <h2 className="font-sans text-2xl font-semibold" style={{ color: 'var(--color-ink)' }}>
           {title}
         </h2>
       </div>

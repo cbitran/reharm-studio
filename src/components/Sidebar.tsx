@@ -35,7 +35,7 @@ export function Sidebar({ active, onNav }: Props) {
         <div className="font-mono text-[10px] text-muted uppercase tracking-[3px] mb-1">
           Studio
         </div>
-        <h1 className="font-serif text-2xl font-normal text-ink leading-tight">
+        <h1 className="font-sans text-xl font-bold text-ink leading-tight">
           Reharm
         </h1>
       </div>

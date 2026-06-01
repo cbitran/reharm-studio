@@ -79,7 +79,7 @@ export default function App() {
           Acordes → MIDI por Estilo
         </div>
         <h1
-          className="font-serif text-5xl font-normal leading-tight"
+          className="font-sans text-5xl font-bold leading-tight"
           style={{ color: 'var(--color-ink)' }}
         >
           Reharm Studio
