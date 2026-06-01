@@ -81,6 +81,7 @@ export function stopAll(): void {
 }
 
 let unifiedCleanup: (() => void) | null = null
+let unifiedTimer: ReturnType<typeof setTimeout> | null = null
 let unifiedStartMs: number | null = null
 let unifiedDurationMs: number | null = null
 
@@ -173,14 +174,21 @@ export async function playUnified({
   const lastTick = allEvents.reduce((max, e) => Math.max(max, e.tick + e.duration), 0)
   const totalMs = lastTick * secsPerTick * 1000
 
-  // +100ms para alinhar com o offset de 0.1s do Tone.js
   unifiedStartMs = performance.now() + 100
   unifiedDurationMs = totalMs
 
-  setTimeout(() => { stopUnified(); onEnd() }, totalMs + 300)
+  unifiedTimer = setTimeout(() => {
+    unifiedTimer = null
+    unifiedCleanup?.()
+    unifiedCleanup = null
+    unifiedStartMs = null
+    unifiedDurationMs = null
+    onEnd()
+  }, totalMs + 150)
 }
 
 export function stopUnified(): void {
+  if (unifiedTimer !== null) { clearTimeout(unifiedTimer); unifiedTimer = null }
   unifiedCleanup?.()
   unifiedCleanup = null
   unifiedStartMs = null

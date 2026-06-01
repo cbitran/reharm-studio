@@ -42,22 +42,10 @@ export function UnifiedPlayer({ pianoEvents, bassEvents, bpm, genreName, chords 
   const [playing, setPlaying] = useState(false)
   const [loop, setLoop] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [ended, setEnded] = useState(false)
   const [muted, setMuted] = useState<Set<TrackId>>(new Set())
   const [solo, setSolo] = useState<TrackId | null>(null)
   const [timbre, setTimbre] = useState<Timbre>('piano')
-
-  // rAF loop para atualizar o playhead enquanto toca
-  useEffect(() => {
-    if (!playing) { setProgress(0); return }
-    let id: number
-    const tick = () => {
-      const p = getUnifiedProgress()
-      if (p !== null) setProgress(p)
-      id = requestAnimationFrame(tick)
-    }
-    id = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(id)
-  }, [playing])
 
   const numBars = Math.max(chords.length, 1)
   const slug = genreName.toLowerCase().replace(/\s+/g, '')
@@ -71,16 +59,39 @@ export function UnifiedPlayer({ pianoEvents, bassEvents, bpm, genreName, chords 
   const chordsSteps = useMemo(() => eventsToSteps(pianoEvents, 0), [pianoEvents])
   const bassSteps = useMemo(() => eventsToSteps(bassEvents, 0), [bassEvents])
 
-  // Refs para capturar sempre o estado mais recente dentro de onEnd
+  // Refs para capturar estado mais recente dentro de callbacks assíncronos
   const loopRef = useRef(loop)
   loopRef.current = loop
 
   const stateRef = useRef({ muted, solo, timbre, kickEvents, pianoEvents, bassEvents, bpm })
   stateRef.current = { muted, solo, timbre, kickEvents, pianoEvents, bassEvents, bpm }
 
-  // runPlaybackRef: função estável que onEnd pode chamar recursivamente
-  const runPlaybackRef = useRef<() => Promise<void>>()
-  runPlaybackRef.current = async () => {
+  // rAF para atualizar o playhead
+  useEffect(() => {
+    if (!playing) { setProgress(0); return }
+    let id: number
+    const tick = () => {
+      const p = getUnifiedProgress()
+      if (p !== null) setProgress(p)
+      id = requestAnimationFrame(tick)
+    }
+    id = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(id)
+  }, [playing])
+
+  // Loop: quando onEnd dispara, React decide se reinicia ou para
+  useEffect(() => {
+    if (!ended) return
+    setEnded(false)
+    if (loopRef.current) {
+      doPlay()
+    } else {
+      setPlaying(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ended])
+
+  const doPlay = async () => {
     const s = stateRef.current
     await playUnified({
       kickEvents: s.kickEvents,
@@ -91,13 +102,7 @@ export function UnifiedPlayer({ pianoEvents, bassEvents, bpm, genreName, chords 
       muted: s.muted,
       solo: s.solo,
       timbre: s.timbre,
-      onEnd: () => {
-        if (loopRef.current) {
-          runPlaybackRef.current?.()
-        } else {
-          setPlaying(false)
-        }
-      },
+      onEnd: () => setEnded(true),
     })
   }
 
@@ -121,7 +126,7 @@ export function UnifiedPlayer({ pianoEvents, bassEvents, bpm, genreName, chords 
     }
     if (!pianoEvents.length && !bassEvents.length) return
     setPlaying(true)
-    await runPlaybackRef.current!()
+    await doPlay()
   }
 
   if (!chords.length) return null
@@ -155,59 +160,60 @@ export function UnifiedPlayer({ pianoEvents, bassEvents, bpm, genreName, chords 
         </span>
       </div>
 
-      <div className="relative">
-        {/* Playhead vertical */}
+      {/* Container das trilhas com playhead sobreposto */}
+      <div className="relative overflow-hidden rounded-lg">
         {playing && (
           <div
             className="absolute top-0 bottom-0 z-10 pointer-events-none"
             style={{
               left: `${progress * 100}%`,
-              width: 1.5,
-              background: 'rgba(255,255,255,0.5)',
-              boxShadow: '0 0 4px rgba(255,255,255,0.4)',
+              width: 2,
+              background: 'var(--color-primary)',
+              opacity: 0.8,
+              boxShadow: '0 0 6px var(--color-primary)',
             }}
           />
         )}
-      <div className="space-y-1 divide-y" style={{ borderColor: 'var(--color-border)' }}>
-        <TrackRow
-          id="kick"
-          label={t('player.kick')}
-          color={TRACK_COLORS.kick}
-          muted={muted.has('kick')}
-          solo={solo === 'kick'}
-          onMute={() => toggleMute('kick')}
-          onSolo={() => toggleSolo('kick')}
-          activeSteps={kickSteps}
-        />
-        <TrackRow
-          id="chords"
-          label={t('player.chords')}
-          color={TRACK_COLORS.chords}
-          muted={muted.has('chords')}
-          solo={solo === 'chords'}
-          onMute={() => toggleMute('chords')}
-          onSolo={() => toggleSolo('chords')}
-          activeSteps={chordsSteps}
-          timbre={timbre}
-          onTimbreChange={setTimbre}
-          events={pianoEvents}
-          bpm={bpm}
-          exportName={slug}
-        />
-        <TrackRow
-          id="bass"
-          label={t('player.bass')}
-          color={TRACK_COLORS.bass}
-          muted={muted.has('bass')}
-          solo={solo === 'bass'}
-          onMute={() => toggleMute('bass')}
-          onSolo={() => toggleSolo('bass')}
-          activeSteps={bassSteps}
-          events={bassEvents}
-          bpm={bpm}
-          exportName={slug}
-        />
-      </div>
+        <div className="space-y-1 divide-y" style={{ borderColor: 'var(--color-border)' }}>
+          <TrackRow
+            id="kick"
+            label={t('player.kick')}
+            color={TRACK_COLORS.kick}
+            muted={muted.has('kick')}
+            solo={solo === 'kick'}
+            onMute={() => toggleMute('kick')}
+            onSolo={() => toggleSolo('kick')}
+            activeSteps={kickSteps}
+          />
+          <TrackRow
+            id="chords"
+            label={t('player.chords')}
+            color={TRACK_COLORS.chords}
+            muted={muted.has('chords')}
+            solo={solo === 'chords'}
+            onMute={() => toggleMute('chords')}
+            onSolo={() => toggleSolo('chords')}
+            activeSteps={chordsSteps}
+            timbre={timbre}
+            onTimbreChange={setTimbre}
+            events={pianoEvents}
+            bpm={bpm}
+            exportName={slug}
+          />
+          <TrackRow
+            id="bass"
+            label={t('player.bass')}
+            color={TRACK_COLORS.bass}
+            muted={muted.has('bass')}
+            solo={solo === 'bass'}
+            onMute={() => toggleMute('bass')}
+            onSolo={() => toggleSolo('bass')}
+            activeSteps={bassSteps}
+            events={bassEvents}
+            bpm={bpm}
+            exportName={slug}
+          />
+        </div>
       </div>
     </div>
   )
