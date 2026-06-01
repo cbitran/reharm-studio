@@ -13,6 +13,7 @@ import { ExportButtons } from './components/ExportButtons'
 import { InstrumentGuide } from './components/InstrumentGuide'
 import { HarmonicField } from './components/HarmonicField'
 import { ProjectBar } from './components/ProjectBar'
+import { SongSearch, type SongAnalysis } from './components/SongSearch'
 import type { Extension, ViradasMode, ReharmChord } from './types'
 import type { SavedProject } from './lib/projects'
 
@@ -78,6 +79,23 @@ export default function App() {
         state={{ text, genreName, extOverride, bpmOverride, swing, viradas, selectedSkeletonId }}
         onLoad={handleLoadProject}
       />
+
+      {/* 00 — Busca por música */}
+      <section className="mb-10">
+        <SectionHeader
+          number="00"
+          title="Buscar música"
+          subtitle="Digite o artista e a música que quer remixar. O sistema identifica a tonalidade e gera o guia do remix."
+        />
+        <SongSearch
+          onAnalysis={(analysis: SongAnalysis, chords: string) => {
+            setText(chords)
+            if (analysis.remix_guide?.bpm) setBpmOverride(analysis.remix_guide.bpm)
+          }}
+          targetStyle={genreName}
+          targetBpm={bpm}
+        />
+      </section>
 
       {/* Header */}
       <header className="mb-10">
