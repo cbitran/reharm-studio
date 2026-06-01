@@ -63,3 +63,6 @@ export interface ProgressionVariant {
   chords: ReharmChord[]
   character: string
 }
+
+export type Timbre = 'pad' | 'pluck' | 'lead' | 'piano'
+export type TrackId = 'kick' | 'chords' | 'bass'
