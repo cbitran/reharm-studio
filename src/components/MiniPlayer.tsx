@@ -5,9 +5,11 @@ import { playEvents, stopAll } from '../audio/player'
 import { reVoice } from '../core/reharmonizer'
 import { NOTE_NAMES } from '../core/parser'
 import type { ParsedChord, Extension, GenreDefinition } from '../types'
+import type { SectionMarker } from './ResultsPage'
 
 interface Props {
   chords: ParsedChord[]
+  markers?: SectionMarker[]
   ext: Extension
   label: string
   tagline: string
@@ -21,7 +23,7 @@ interface Props {
 }
 
 export function MiniPlayer({
-  chords, ext, label, tagline, color, genre, bpm,
+  chords, markers, ext, label, tagline, color, genre, bpm,
   isActive, onPlay, onStop, songSlug,
 }: Props) {
   const [progress, setProgress] = useState(0)
@@ -39,7 +41,7 @@ export function MiniPlayer({
     [chords, ext, genre],
   )
 
-  // Notas do primeiro acorde para exibição visual
+  // Notas do primeiro acorde
   const noteChips = useMemo(() => {
     if (!chords.length) return []
     const first = chords[0]!
@@ -54,6 +56,16 @@ export function MiniPlayer({
     const lastTick = all.reduce((max, e) => Math.max(max, e.tick + e.duration), 0)
     return lastTick * secsPerTick * 1000 + 300
   }, [pe, be, bpm])
+
+  // Seção atual com base no progresso
+  const currentSection = useMemo(() => {
+    if (!markers?.length || progress <= 0) return null
+    let current = markers[0]!
+    for (const m of markers) {
+      if (m.fraction <= progress) current = m
+    }
+    return current.name
+  }, [progress, markers])
 
   useEffect(() => {
     if (!isActive) {
@@ -83,7 +95,6 @@ export function MiniPlayer({
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
       stopAll()
     }
-    // pe/be/bpm/totalMs/onStop stable from parent; only isActive triggers restart
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive])
 
@@ -97,12 +108,8 @@ export function MiniPlayer({
   }
 
   return (
-    <div
-      className="card p-5"
-      style={{
-        borderLeft: `3px solid ${color}`,
-      }}
-    >
+    <div className="card p-5" style={{ borderLeft: `3px solid ${color}` }}>
+      {/* Cabeçalho */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-baseline gap-2">
           <span className="font-sans text-xl font-bold" style={{ color }}>
@@ -112,20 +119,32 @@ export function MiniPlayer({
             — {tagline}
           </span>
         </div>
-        <button
-          onClick={handleExport}
-          className="font-mono text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-          style={{
-            color: 'var(--color-primary)',
-            border: '1px solid var(--color-border)',
-            background: 'var(--color-card)',
-          }}
-        >
-          ↓ MIDI
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Seção atual (só quando tocando) */}
+          {isActive && currentSection && (
+            <span
+              className="font-mono text-[10px] px-2 py-0.5 rounded-full"
+              style={{ background: `${color}22`, color }}
+            >
+              {currentSection}
+            </span>
+          )}
+          <button
+            onClick={handleExport}
+            className="font-mono text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+            style={{
+              color: 'var(--color-primary)',
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-card)',
+            }}
+          >
+            ↓ MIDI
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Play/Stop */}
         <button
           onClick={isActive ? onStop : onPlay}
           className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 font-semibold text-base transition-all"
@@ -156,19 +175,33 @@ export function MiniPlayer({
             ))}
           </div>
 
-          {/* Barra de progresso */}
+          {/* Barra de progresso com marcadores de seção */}
           <div
-            className="h-1.5 rounded-full overflow-hidden"
+            className="relative h-2 rounded-full overflow-hidden"
             style={{ background: 'var(--color-bg)' }}
           >
+            {/* Preenchimento do progresso */}
             <div
-              className="h-full rounded-full"
+              className="absolute inset-y-0 left-0 rounded-full"
               style={{
                 width: `${progress * 100}%`,
                 background: color,
                 transition: isActive ? 'none' : 'width 0.3s ease',
               }}
             />
+            {/* Marcadores verticais de seção */}
+            {markers?.slice(1).map((m, i) => (
+              <div
+                key={i}
+                className="absolute top-0 bottom-0 w-px"
+                style={{
+                  left: `${m.fraction * 100}%`,
+                  background: 'var(--color-card)',
+                  opacity: 0.7,
+                  zIndex: 1,
+                }}
+              />
+            ))}
           </div>
         </div>
       </div>

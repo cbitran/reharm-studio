@@ -6,7 +6,7 @@ import { trackBytes, midiFile } from '../core/midi-writer'
 import { warmupAudio } from '../audio/player'
 import { GENRES } from '../genres'
 import { MiniPlayer } from './MiniPlayer'
-import type { Extension } from '../types'
+import type { Extension, ParsedChord } from '../types'
 import type { SongAnalysis } from './SongSearch'
 import type { SimpleWizardSong } from './SimpleWizard'
 
@@ -19,6 +19,11 @@ interface Props {
   onBack: () => void
 }
 
+export interface SectionMarker {
+  name: string
+  fraction: number  // posição 0-1 na música completa
+}
+
 const EXT_CONFIGS: { ext: Extension; label: string; tagline: string; color: string }[] = [
   { ext: 'tri', label: '3 notas', tagline: 'Clean',    color: '#7ad1a8' },
   { ext: '7',   label: '4 notas', tagline: 'Quente',   color: '#8ab4f0' },
@@ -26,14 +31,14 @@ const EXT_CONFIGS: { ext: Extension; label: string; tagline: string; color: stri
   { ext: '11',  label: '6 notas', tagline: 'Completo', color: '#f0a84a' },
 ]
 
+const MAX_BARS = 96  // cap para não gerar MIDI gigante (~4 min a 120 BPM)
+
 export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack }: Props) {
   const [activeExt, setActiveExt] = useState<Extension | null>(null)
 
-  // Pré-aquece synths logo que a tela monta — elimina delay no primeiro play
   useEffect(() => { warmupAudio().catch(() => {}) }, [])
 
   const genre = GENRES[genreName] ?? GENRES['House']!
-  const { chords } = useMemo(() => parseProg(analysis.progression), [analysis.progression])
 
   const songSlug = useMemo(
     () =>
@@ -44,20 +49,54 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
     [song],
   )
 
+  // Monta a música completa a partir das seções retornadas pela IA
+  const fullSong = useMemo(() => {
+    const rawSections = analysis.sections?.length
+      ? analysis.sections
+      : [{ name: 'Main', progression: analysis.progression, repeats: 2 }]
+
+    const allChords: ParsedChord[] = []
+    const rawMarkers: { name: string; barIndex: number }[] = []
+
+    for (const sec of rawSections) {
+      const { chords: secChords } = parseProg(sec.progression)
+      if (!secChords.length) continue
+      if (allChords.length >= MAX_BARS) break
+
+      rawMarkers.push({ name: sec.name, barIndex: allChords.length })
+      const repeats = Math.min(sec.repeats, 8)
+      for (let r = 0; r < repeats; r++) {
+        for (const c of secChords) {
+          if (allChords.length >= MAX_BARS) break
+          allChords.push(c)
+        }
+      }
+    }
+
+    const total = allChords.length
+    const markers: SectionMarker[] = rawMarkers.map(m => ({
+      name: m.name,
+      fraction: total > 0 ? m.barIndex / total : 0,
+    }))
+
+    const durationSecs = total * 4 * (60 / bpm)
+
+    return { chords: allChords, markers, durationSecs }
+  }, [analysis, bpm])
+
   const handlePlay = useCallback((ext: Extension) => setActiveExt(ext), [])
   const handleStop = useCallback(() => setActiveExt(null), [])
 
   const handleDownloadAll = () => {
     const files: Record<string, Uint8Array> = {}
     for (const { ext, label } of EXT_CONFIGS) {
-      const { pe, be } = genEvents(chords, ext, genre, 0.58, 'antecip')
+      const { pe, be } = genEvents(fullSong.chords, ext, genre, 0.58, 'antecip')
       const midi = midiFile([
         trackBytes([], bpm, 'Tempo'),
         trackBytes(pe, null, 'Piano'),
         trackBytes(be, null, 'Bass'),
       ])
-      const slug = label.replace(' ', '')
-      files[`${songSlug}-${slug}.mid`] = new Uint8Array(midi)
+      files[`${songSlug}-${label.replace(' ', '')}.mid`] = new Uint8Array(midi)
     }
     const zipped = zipSync(files)
     const url = URL.createObjectURL(new Blob([zipped], { type: 'application/zip' }))
@@ -68,7 +107,12 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
     URL.revokeObjectURL(url)
   }
 
-  if (!chords.length) {
+  const durationLabel = useMemo(() => {
+    const s = Math.round(fullSong.durationSecs)
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  }, [fullSong.durationSecs])
+
+  if (!fullSong.chords.length) {
     return (
       <div
         className="max-w-[860px] mx-auto px-6 py-10"
@@ -77,11 +121,7 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
         <p className="text-sm mb-4" style={{ color: 'var(--color-muted)' }}>
           Não foi possível analisar a progressão.
         </p>
-        <button
-          onClick={onBack}
-          className="font-mono text-xs"
-          style={{ color: 'var(--color-primary)' }}
-        >
+        <button onClick={onBack} className="font-mono text-xs" style={{ color: 'var(--color-primary)' }}>
           ← Voltar
         </button>
       </div>
@@ -101,13 +141,9 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
         </button>
 
         {/* Song header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-4 mb-6">
           {song.cover && (
-            <img
-              src={song.cover}
-              alt=""
-              className="w-16 h-16 rounded-2xl object-cover shrink-0"
-            />
+            <img src={song.cover} alt="" className="w-16 h-16 rounded-2xl object-cover shrink-0" />
           )}
           <div>
             <h2 className="font-sans text-2xl font-bold" style={{ color: 'var(--color-ink)' }}>
@@ -119,24 +155,36 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
           </div>
         </div>
 
-        {/* Instrução */}
-        <p
-          className="font-mono text-xs mb-6 px-4 py-3 rounded-xl"
-          style={{
-            color: 'var(--color-muted)',
-            background: 'var(--color-card)',
-            border: '1px solid var(--color-border)',
-          }}
-        >
-          Ouça cada versão e escolha a que combina com o seu estilo. Depois exporte o MIDI para sua DAW.
-        </p>
+        {/* Seções */}
+        {fullSong.markers.length > 1 && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {fullSong.markers.map((m, i) => (
+              <span
+                key={i}
+                className="font-mono text-[11px] px-2.5 py-1 rounded-full"
+                style={{
+                  background: 'var(--color-card)',
+                  color: 'var(--color-muted)',
+                  border: '1px solid var(--color-border)',
+                }}
+              >
+                {m.name}
+              </span>
+            ))}
+            <span className="font-mono text-[11px] px-2.5 py-1 rounded-full ml-auto"
+              style={{ color: 'var(--color-muted)' }}>
+              {durationLabel}
+            </span>
+          </div>
+        )}
 
         {/* 4 MiniPlayers */}
         <div className="space-y-4 mb-8">
           {EXT_CONFIGS.map(({ ext, label, tagline, color }) => (
             <MiniPlayer
               key={ext}
-              chords={chords}
+              chords={fullSong.chords}
+              markers={fullSong.markers}
               ext={ext}
               label={label}
               tagline={tagline}
@@ -161,7 +209,7 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
             border: '1px solid var(--color-border)',
           }}
         >
-          ↓ Baixar os 4 MIDIs (.zip)
+          ↓ Baixar os 4 MIDIs — música completa (.zip)
         </button>
 
         {/* Modo avançado */}

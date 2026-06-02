@@ -20,15 +20,31 @@ Analyze the song "${title}" by ${artist}.
 
 IMPORTANT: Keep ALL JSON keys exactly as shown below (in English). Only translate the string values. ${langInstruction}
 
+For the "sections" field:
+- List ALL sections of the song in order as they appear (Intro, Verso, Pré-Refrão, Refrão, Ponte, Outro, etc.)
+- "progression" = the unique chord sequence for that section (2–8 chords, use the same notation as the main "progression" field)
+- "repeats" = how many times that section loops before the next one begins (integer, 1–8)
+- If a section uses the same chords as another, still include it with the correct repeats
+- If unsure about a section's chords, use the closest approximation or the main progression
+
 Respond ONLY with valid JSON, no markdown, no extra text:
 {
   "key": "F",
   "mode": "major",
   "bpm_original": 69,
-  "progression": "Fmaj7 – Am7 – Bbmaj7 – C7",
+  "progression": "Fmaj7 Am7 Bbmaj7 C7",
   "progression_degrees": "I – iii – IV – V",
   "character": "Soul, 80s R&B, emotional, warm",
   "borrowed_chords": ["Eb (bVII)", "Fm (i minor)"],
+  "sections": [
+    { "name": "Intro",      "progression": "Fmaj7 Am7",               "repeats": 2 },
+    { "name": "Verso",      "progression": "Fmaj7 Am7 Bbmaj7 C7",     "repeats": 4 },
+    { "name": "Pré-Refrão", "progression": "Dm7 G7",                  "repeats": 2 },
+    { "name": "Refrão",     "progression": "Bbmaj7 C7 Am7 Fmaj7",     "repeats": 4 },
+    { "name": "Verso",      "progression": "Fmaj7 Am7 Bbmaj7 C7",     "repeats": 2 },
+    { "name": "Refrão",     "progression": "Bbmaj7 C7 Am7 Fmaj7",     "repeats": 4 },
+    { "name": "Outro",      "progression": "Fmaj7 Am7",               "repeats": 4 }
+  ],
   "remix_guide": {
     "style": "${targetStyle}",
     "bpm": ${targetBpm},

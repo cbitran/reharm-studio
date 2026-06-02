@@ -11,6 +11,12 @@ interface SpotifySuggestion {
   duration: number
 }
 
+export interface SongSection {
+  name: string
+  progression: string
+  repeats: number
+}
+
 export interface SongAnalysis {
   key: string
   mode: string
@@ -19,6 +25,7 @@ export interface SongAnalysis {
   progression_degrees: string
   character: string
   borrowed_chords: string[]
+  sections?: SongSection[]
   spotify?: { energy: number; danceability: number } | null
   remix_guide: {
     style: string
