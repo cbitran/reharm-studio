@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { parseProg } from './core/parser'
 import { reVoice, nameChord } from './core/reharmonizer'
@@ -15,7 +15,8 @@ import { InstrumentGuide } from './components/InstrumentGuide'
 import { HarmonicField } from './components/HarmonicField'
 import { ProjectBar } from './components/ProjectBar'
 import { SongSearch, type SongAnalysis } from './components/SongSearch'
-import { UnifiedPlayer } from './components/UnifiedPlayer'
+import { TabPlayer, type TabPlayerHandle } from './components/TabPlayer'
+import { ProgressionBrowser } from './components/ProgressionBrowser'
 import type { Extension, ViradasMode, ReharmChord } from './types'
 import type { SavedProject } from './lib/projects'
 import { useAI } from './contexts/AIContext'
@@ -59,7 +60,8 @@ export default function App() {
   const ext = extOverride ?? genre.ext
   const bpm = bpmOverride ?? genre.bpm
 
-  const { updateSession, badges } = useAI()
+  const { updateSession, badges, session: aiSession } = useAI()
+  const tabPlayerRef = useRef<TabPlayerHandle>(null)
 
   // Controla o fluxo de entrada: wizard → guia passo a passo → studio completo
   const [inlineWizardDone, setInlineWizardDone] = useState(false)
@@ -97,6 +99,13 @@ export default function App() {
   const handleGuideNext = useCallback(() => {
     setGuideStep(s => s + 1)
     setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50)
+  }, [])
+
+  const handleChordAdd = useCallback((chord: string) => {
+    setText(prev => {
+      const trimmed = prev.trim()
+      return trimmed ? `${trimmed} ${chord}` : chord
+    })
   }, [])
 
   const { chords: parsedChords, bad } = useMemo(() => parseProg(text), [text])
@@ -165,15 +174,30 @@ export default function App() {
 
         {/* Remix Preview — visível desde o passo 0 */}
         {parsedChords.length > 0 && (
-          <section className="mb-10">
-            <UnifiedPlayer
-              pianoEvents={pe}
-              bassEvents={be}
-              bpm={bpm}
+          <section className="mb-6">
+            <TabPlayer
+              ref={tabPlayerRef}
+              initialChords={text}
               genre={genre}
               genreName={genreName}
-              chords={parsedChords}
+              bpm={bpm}
               ext={ext}
+              swing={swing}
+              viradas={viradas}
+            />
+          </section>
+        )}
+
+        {/* Progression Browser — aparece junto com o player */}
+        {parsedChords.length > 0 && aiSession.song && (
+          <section className="mb-10">
+            <ProgressionBrowser
+              song={`${aiSession.song.artist} - ${aiSession.song.title}`}
+              style={genreName}
+              bpm={bpm}
+              feeling={aiSession.feeling.join(', ')}
+              onLoadTab={p => tabPlayerRef.current?.loadTab(p)}
+              onChordClick={handleChordAdd}
             />
           </section>
         )}
@@ -345,20 +369,35 @@ export default function App() {
 
       {/* 05.5 — Remix Preview */}
       {parsedChords.length > 0 && (
-        <section id="remix-preview" className="mb-10 scroll-mt-6">
+        <section id="remix-preview" className="mb-6 scroll-mt-6">
           <SectionHeader
             number="05.5"
             title={t('sections.player', 'Remix Preview')}
             subtitle={t('sections.playerHint', '')}
           />
-          <UnifiedPlayer
-            pianoEvents={pe}
-            bassEvents={be}
-            bpm={bpm}
+          <TabPlayer
+            ref={tabPlayerRef}
+            initialChords={text}
             genre={genre}
             genreName={genreName}
-            chords={parsedChords}
+            bpm={bpm}
             ext={ext}
+            swing={swing}
+            viradas={viradas}
+          />
+        </section>
+      )}
+
+      {/* 05.6 — Progression Browser */}
+      {parsedChords.length > 0 && aiSession.song && (
+        <section id="progression-browser" className="mb-10 scroll-mt-6">
+          <ProgressionBrowser
+            song={`${aiSession.song.artist} - ${aiSession.song.title}`}
+            style={genreName}
+            bpm={bpm}
+            feeling={aiSession.feeling.join(', ')}
+            onLoadTab={p => tabPlayerRef.current?.loadTab(p)}
+            onChordClick={handleChordAdd}
           />
         </section>
       )}
