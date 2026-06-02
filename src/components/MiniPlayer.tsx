@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { genEvents, TPQ } from '../core/groove'
+import { genArpeggioEvents, genPadEvents, genLeadEvents } from '../core/arranger'
 import { trackBytes, midiFile, downloadMidi } from '../core/midi-writer'
 import { playEvents, stopAll } from '../audio/player'
 import { reVoice } from '../core/reharmonizer'
@@ -10,6 +11,7 @@ import type { SectionMarker } from './ResultsPage'
 interface Props {
   chords: ParsedChord[]
   markers?: SectionMarker[]
+  scale: Set<number>
   ext: Extension
   label: string
   tagline: string
@@ -24,7 +26,7 @@ interface Props {
 }
 
 export function MiniPlayer({
-  chords, markers, ext, label, tagline, color, genre, bpm,
+  chords, markers, scale, ext, label, tagline, color, genre, bpm,
   isActive, onPlay, onStop, onProgress, songSlug,
 }: Props) {
   const [progress, setProgress] = useState(0)
@@ -102,10 +104,16 @@ export function MiniPlayer({
   }, [isActive])
 
   const handleExport = () => {
+    const ae = genArpeggioEvents(chords, ext, scale)
+    const pde = genPadEvents(chords, ext, scale)
+    const le = genLeadEvents(chords, ext, scale)
     const midi = midiFile([
       trackBytes([], bpm, 'Tempo'),
       trackBytes(pe, null, 'Piano'),
       trackBytes(be, null, 'Bass'),
+      trackBytes(ae, null, 'Arpejo'),
+      trackBytes(pde, null, 'Pad'),
+      trackBytes(le, null, 'Lead'),
     ])
     downloadMidi(midi, `${songSlug}-${ext}.mid`)
   }

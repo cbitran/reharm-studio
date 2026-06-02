@@ -2,8 +2,10 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { zipSync } from 'fflate'
 import { parseProg } from '../core/parser'
 import { genEvents } from '../core/groove'
+import { genArpeggioEvents, genPadEvents, genLeadEvents } from '../core/arranger'
 import { trackBytes, midiFile } from '../core/midi-writer'
 import { warmupAudio } from '../audio/player'
+import { buildScale } from '../core/scaleUtils'
 import { GENRES } from '../genres'
 import { MiniPlayer } from './MiniPlayer'
 import type { Extension, ParsedChord } from '../types'
@@ -47,6 +49,12 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
   useEffect(() => { warmupAudio().catch(() => {}) }, [])
 
   const genre = GENRES[genreName] ?? GENRES['House']!
+
+  // Escala da música detectada pela IA (key + mode → notas diatônicas)
+  const scale = useMemo(
+    () => buildScale(analysis.key, analysis.mode),
+    [analysis.key, analysis.mode],
+  )
 
   const songSlug = useMemo(
     () =>
@@ -134,10 +142,16 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
     const files: Record<string, Uint8Array> = {}
     for (const { ext, label } of EXT_CONFIGS) {
       const { pe, be } = genEvents(fullSong.chords, ext, genre, 0.58, 'off')
+      const ae = genArpeggioEvents(fullSong.chords, ext, scale)
+      const pde = genPadEvents(fullSong.chords, ext, scale)
+      const le = genLeadEvents(fullSong.chords, ext, scale)
       const midi = midiFile([
         trackBytes([], bpm, 'Tempo'),
         trackBytes(pe, null, 'Piano'),
         trackBytes(be, null, 'Bass'),
+        trackBytes(ae, null, 'Arpejo'),
+        trackBytes(pde, null, 'Pad'),
+        trackBytes(le, null, 'Lead'),
       ])
       files[`${songSlug}-${label.replace(' ', '')}.mid`] = new Uint8Array(midi)
     }
@@ -302,6 +316,7 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
               key={ext}
               chords={fullSong.chords}
               markers={fullSong.markers}
+              scale={scale}
               ext={ext}
               label={label}
               tagline={tagline}
@@ -327,7 +342,7 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
             border: '1px solid var(--color-border)',
           }}
         >
-          ↓ Baixar os 4 MIDIs — música completa (.zip)
+          ↓ Baixar os 4 MIDIs — 5 trilhas cada (.zip)
         </button>
 
         <div className="text-center">
