@@ -197,6 +197,7 @@ export default function App() {
               mainChords={text}
               style={genreName}
               bpm={bpm}
+              ext={ext}
               feeling={aiSession.feeling.join(', ')}
               onLoadTab={p => tabPlayerRef.current?.loadTab(p)}
               onChordClick={handleChordAdd}
@@ -399,6 +400,7 @@ export default function App() {
             mainChords={text}
             style={genreName}
             bpm={bpm}
+            ext={ext}
             feeling={aiSession.feeling.join(', ')}
             onLoadTab={p => tabPlayerRef.current?.loadTab(p)}
             onChordClick={handleChordAdd}

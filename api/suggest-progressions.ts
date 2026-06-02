@@ -44,17 +44,28 @@ export default async function handler(req: Request) {
     return new Response('Method not allowed', { status: 405 })
   }
 
-  const { artist, title, style, bpm, feeling, mainChords } = await req.json() as {
+  const { artist, title, style, bpm, ext, feeling, mainChords } = await req.json() as {
     artist: string
     title: string
     style: string
     bpm: number
+    ext?: string
     feeling: string
     mainChords?: string
   }
 
+  const extInstructions: Record<string, string> = {
+    tri:  'Use only triads — no extensions, no 7ths. Simple and clean.',
+    '7':  'Use 7th chords (maj7, m7, dom7). Avoid 9ths and higher.',
+    '9':  'Use 9th chords (maj9, m9, 9, dom9). This is the default for rich house/soul sound.',
+    '11': 'Use 11th and higher extensions (maj9#11, m11, 13, sus4/9 etc.). Maximum richness.',
+  }
+  const extCtx = ext && extInstructions[ext]
+    ? `CHORD EXTENSION: ${extInstructions[ext]}`
+    : 'CHORD EXTENSION: Use rich 7th/9th voicings appropriate for the style.'
+
   const mainChordsCtx = mainChords
-    ? `The main progression already in use is: ${mainChords}. Your suggestions must be DIFFERENT from this.`
+    ? `The main progression already in use is: ${mainChords}. Your suggestions MUST be harmonically different — different chords, different emotional direction.`
     : ''
 
   const prompt = `You are a music producer and harmony expert specializing in remixes and dance music.
@@ -63,6 +74,7 @@ THE ORIGINAL SONG: "${title}" by ${artist}
 REMIX STYLE: ${style}
 TARGET BPM: ${bpm} BPM
 FEELING: ${feeling}
+${extCtx}
 ${mainChordsCtx}
 
 STEP 1 — Identify the harmonic DNA of "${title}" by ${artist}:
@@ -73,7 +85,7 @@ STEP 1 — Identify the harmonic DNA of "${title}" by ${artist}:
 STEP 2 — Generate 5 remix progressions that:
 - Are ROOTED IN THE SAME KEY as the original song (or its parallel/relative key if the feeling demands)
 - Sound like authentic remixes of THIS specific song — not generic ${style} music
-- Each progression has 4 chords with rich extensions (maj9, m9, 7sus4, m7, maj7, 9, etc.) appropriate for ${style}
+- Each progression has 4 chords using the EXACT extension level specified above
 - Have MUSICAL VARIETY across the 5 suggestions: explore darker, brighter, more tense, more open directions
 - Feel authentically connected to the mood of "${title}" while transformed into ${style} at ${bpm} BPM with feeling: ${feeling}
 
