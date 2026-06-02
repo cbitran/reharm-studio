@@ -375,44 +375,15 @@ export function SidebarPage({ onAdvanced }: Props) {
       <main className="flex-1 overflow-y-auto px-8 py-8">
         {!result ? (
           /* Zero state */
-          <div className="flex flex-col justify-center" style={{ minHeight: '80vh' }}>
-            <div className="max-w-md">
-              <p className="font-sans text-2xl font-bold mb-3" style={{ color: 'var(--color-ink)' }}>
-                Seus acordes vão aparecer aqui
-              </p>
-              <p className="font-mono text-sm leading-relaxed mb-10" style={{ color: 'var(--color-muted)' }}>
-                Preencha as informações ao lado e clique em{' '}
-                <span style={{ color: 'var(--color-primary)' }}>Gerar remix</span>{' '}
-                para ver 4 variações harmônicas da sua música — do voicing mais limpo ao mais completo.
-              </p>
-
-              {/* Ghost cards das 4 extensões */}
-              <div className="space-y-3">
-                {EXT_CONFIGS.map(({ label, tagline, color }) => (
-                  <div
-                    key={label}
-                    className="card p-4 flex items-center gap-4"
-                    style={{ borderLeft: `3px solid ${color}33`, opacity: 0.45 }}
-                  >
-                    <div
-                      className="w-10 h-10 rounded-full shrink-0"
-                      style={{ background: `${color}22`, border: `1px solid ${color}44` }}
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-baseline gap-2 mb-2">
-                        <span className="font-sans text-base font-bold" style={{ color }}>
-                          {label}
-                        </span>
-                        <span className="font-mono text-xs" style={{ color: 'var(--color-muted)' }}>
-                          — {tagline}
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full" style={{ background: 'var(--color-bg)', width: '100%' }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="flex flex-col items-center justify-center text-center" style={{ minHeight: '80vh' }}>
+            <p className="font-sans text-2xl font-bold mb-3" style={{ color: 'var(--color-ink)' }}>
+              Seus acordes vão aparecer aqui
+            </p>
+            <p className="font-mono text-sm leading-relaxed max-w-sm" style={{ color: 'var(--color-muted)' }}>
+              Preencha as informações ao lado e clique em{' '}
+              <span style={{ color: 'var(--color-primary)' }}>Gerar remix</span>{' '}
+              para ver 4 variações harmônicas da sua música — do voicing mais limpo ao mais completo.
+            </p>
           </div>
         ) : (
           <div
