@@ -5,6 +5,7 @@ import { createTimbreSynth } from './timbres'
 let synth: Tone.PolySynth | null = null
 let bass: Tone.MonoSynth | null = null
 let reverbNode: Tone.Reverb | null = null
+let onEndTimeoutId: ReturnType<typeof setTimeout> | null = null
 
 const SYNTH_DB = -13
 const BASS_DB = -10
@@ -48,10 +49,6 @@ export async function playEvents(
   await ensureSynths()
   if (!synth || !bass) return
 
-  // Restaura volumes caso stopAll() tenha silenciado
-  synth.volume.value = SYNTH_DB
-  bass.volume.value = BASS_DB
-
   const secsPerTick = 60 / bpm / tpq
   const now = Tone.now() + 0.05
 
@@ -77,7 +74,11 @@ export async function playEvents(
   const lastTick = allEvents.reduce((max, e) => Math.max(max, e.tick + e.duration), 0)
   const totalMs = lastTick * secsPerTick * 1000
 
-  setTimeout(onEnd, totalMs + 300)
+  if (onEndTimeoutId) clearTimeout(onEndTimeoutId)
+  onEndTimeoutId = setTimeout(() => {
+    onEndTimeoutId = null
+    onEnd()
+  }, totalMs + 300)
 }
 
 export async function previewChord(root: number, intervals: number[]): Promise<void> {
@@ -90,9 +91,12 @@ export async function previewChord(root: number, intervals: number[]): Promise<v
 }
 
 export function stopAll(): void {
-  // Silencia imediatamente — cancela notas agendadas mesmo com timestamp futuro
-  if (synth) { synth.volume.value = -Infinity; synth.releaseAll() }
-  if (bass) bass.volume.value = -Infinity
+  if (onEndTimeoutId) { clearTimeout(onEndTimeoutId); onEndTimeoutId = null }
+  // dispose destrói os nós do Web Audio API e cancela todos os eventos agendados
+  // volume=-Infinity era insuficiente: playEvents restaurava o volume trazendo eventos zumbi de volta
+  if (synth) { synth.dispose(); synth = null }
+  if (bass) { bass.dispose(); bass = null }
+  if (reverbNode) { reverbNode.dispose(); reverbNode = null }
   Tone.Transport.cancel()
 }
 
