@@ -21,7 +21,7 @@ interface Props {
 
 export interface SectionMarker {
   name: string
-  fraction: number  // posição 0-1 na música completa
+  fraction: number
 }
 
 const EXT_CONFIGS: { ext: Extension; label: string; tagline: string; color: string }[] = [
@@ -31,10 +31,18 @@ const EXT_CONFIGS: { ext: Extension; label: string; tagline: string; color: stri
   { ext: '11',  label: '6 notas', tagline: 'Completo', color: '#f0a84a' },
 ]
 
-const MAX_BARS = 96  // cap para não gerar MIDI gigante (~4 min a 120 BPM)
+// Paleta de cores por nome de seção
+const SECTION_PALETTE = [
+  '#8ab4f0', '#7ad1a8', '#c084fc', '#f0a84a',
+  '#e88a8a', '#7ec8d4', '#f0c84a', '#a88af0',
+]
+
+const MAX_BARS = 96
 
 export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack }: Props) {
   const [activeExt, setActiveExt] = useState<Extension | null>(null)
+  const [activeProgress, setActiveProgress] = useState(0)
+  const [showTimeline, setShowTimeline] = useState(false)
 
   useEffect(() => { warmupAudio().catch(() => {}) }, [])
 
@@ -49,7 +57,7 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
     [song],
   )
 
-  // Monta a música completa a partir das seções retornadas pela IA
+  // Monta a música completa a partir das seções
   const fullSong = useMemo(() => {
     const rawSections = analysis.sections?.length
       ? analysis.sections
@@ -62,7 +70,6 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
       const { chords: secChords } = parseProg(sec.progression)
       if (!secChords.length) continue
       if (allChords.length >= MAX_BARS) break
-
       rawMarkers.push({ name: sec.name, barIndex: allChords.length })
       const repeats = Math.min(sec.repeats, 8)
       for (let r = 0; r < repeats; r++) {
@@ -79,13 +86,49 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
       fraction: total > 0 ? m.barIndex / total : 0,
     }))
 
-    const durationSecs = total * 4 * (60 / bpm)
+    return { chords: allChords, markers, totalBars: total }
+  }, [analysis])
 
-    return { chords: allChords, markers, durationSecs }
-  }, [analysis, bpm])
+  // Cor por nome de seção (mesma seção = mesma cor)
+  const sectionColorMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    const seen: string[] = []
+    fullSong.markers.forEach(m => {
+      if (!map[m.name]) {
+        map[m.name] = SECTION_PALETTE[seen.length % SECTION_PALETTE.length]!
+        seen.push(m.name)
+      }
+    })
+    return map
+  }, [fullSong.markers])
 
-  const handlePlay = useCallback((ext: Extension) => setActiveExt(ext), [])
-  const handleStop = useCallback(() => setActiveExt(null), [])
+  // Índice do marcador ativo com base no progresso
+  const currentMarkerIdx = useMemo(() => {
+    if (activeProgress <= 0 || activeExt === null) return -1
+    let idx = 0
+    for (let i = 0; i < fullSong.markers.length; i++) {
+      if (fullSong.markers[i]!.fraction <= activeProgress) idx = i
+      else break
+    }
+    return idx
+  }, [activeProgress, activeExt, fullSong.markers])
+
+  const handlePlay = useCallback((ext: Extension) => {
+    setActiveProgress(0)
+    setActiveExt(ext)
+  }, [])
+
+  const handleStop = useCallback(() => {
+    setActiveExt(null)
+    setActiveProgress(0)
+  }, [])
+
+  const handleProgress = useCallback((p: number) => setActiveProgress(p), [])
+
+  const durationLabel = useMemo(() => {
+    const s = Math.round(fullSong.totalBars * 4 * (60 / bpm))
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  }, [fullSong.totalBars, bpm])
 
   const handleDownloadAll = () => {
     const files: Record<string, Uint8Array> = {}
@@ -107,17 +150,10 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
     URL.revokeObjectURL(url)
   }
 
-  const durationLabel = useMemo(() => {
-    const s = Math.round(fullSong.durationSecs)
-    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
-  }, [fullSong.durationSecs])
-
   if (!fullSong.chords.length) {
     return (
-      <div
-        className="max-w-[860px] mx-auto px-6 py-10"
-        style={{ background: 'var(--color-bg)', minHeight: '100vh' }}
-      >
+      <div className="max-w-[860px] mx-auto px-6 py-10"
+        style={{ background: 'var(--color-bg)', minHeight: '100vh' }}>
         <p className="text-sm mb-4" style={{ color: 'var(--color-muted)' }}>
           Não foi possível analisar a progressão.
         </p>
@@ -127,6 +163,13 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
       </div>
     )
   }
+
+  // Blocos da timeline com largura proporcional
+  const timelineBlocks = fullSong.markers.map((m, i) => ({
+    ...m,
+    color: sectionColorMap[m.name] ?? '#aaa',
+    widthPct: ((fullSong.markers[i + 1]?.fraction ?? 1) - m.fraction) * 100,
+  }))
 
   return (
     <div style={{ background: 'var(--color-bg)', minHeight: '100vh' }}>
@@ -155,26 +198,100 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
           </div>
         </div>
 
-        {/* Seções */}
-        {fullSong.markers.length > 1 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {fullSong.markers.map((m, i) => (
+        {/* Pills de seção com destaque ativo */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          {fullSong.markers.map((m, i) => {
+            const isActive = currentMarkerIdx === i
+            const sColor = sectionColorMap[m.name] ?? 'var(--color-muted)'
+            return (
               <span
                 key={i}
-                className="font-mono text-[11px] px-2.5 py-1 rounded-full"
+                className="font-mono text-[11px] px-2.5 py-1 rounded-full transition-all"
                 style={{
-                  background: 'var(--color-card)',
-                  color: 'var(--color-muted)',
-                  border: '1px solid var(--color-border)',
+                  background: isActive ? `${sColor}33` : 'var(--color-card)',
+                  color: isActive ? sColor : 'var(--color-muted)',
+                  border: `1px solid ${isActive ? sColor : 'var(--color-border)'}`,
+                  fontWeight: isActive ? 700 : 400,
+                  transform: isActive ? 'scale(1.05)' : 'scale(1)',
                 }}
               >
                 {m.name}
               </span>
-            ))}
-            <span className="font-mono text-[11px] px-2.5 py-1 rounded-full ml-auto"
-              style={{ color: 'var(--color-muted)' }}>
-              {durationLabel}
-            </span>
+            )
+          })}
+          <span className="font-mono text-[11px] ml-auto" style={{ color: 'var(--color-muted)' }}>
+            {durationLabel}
+          </span>
+        </div>
+
+        {/* Botão toggle timeline */}
+        {fullSong.markers.length > 1 && (
+          <button
+            onClick={() => setShowTimeline(v => !v)}
+            className="font-mono text-[10px] mb-4 flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity"
+            style={{ color: 'var(--color-muted)' }}
+          >
+            {showTimeline ? '▾' : '▸'} {showTimeline ? 'Fechar timeline' : 'Ver timeline'}
+          </button>
+        )}
+
+        {/* Timeline expansível */}
+        {showTimeline && (
+          <div className="mb-6 card p-4">
+            <div className="relative">
+              {/* Barra de seções */}
+              <div className="flex h-8 rounded-lg overflow-hidden mb-1">
+                {timelineBlocks.map((b, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-center overflow-hidden font-mono text-[9px] font-semibold"
+                    style={{
+                      width: `${b.widthPct}%`,
+                      background: b.color,
+                      opacity: currentMarkerIdx === i ? 1 : 0.35,
+                      color: '#111',
+                      transition: 'opacity 0.2s',
+                      whiteSpace: 'nowrap',
+                      padding: '0 4px',
+                    }}
+                    title={b.name}
+                  >
+                    {b.widthPct > 6 ? b.name : ''}
+                  </div>
+                ))}
+              </div>
+
+              {/* Playhead */}
+              {activeExt !== null && (
+                <div
+                  className="absolute top-0 bottom-1 w-0.5 rounded-full pointer-events-none"
+                  style={{
+                    left: `${activeProgress * 100}%`,
+                    background: 'white',
+                    boxShadow: '0 0 4px rgba(0,0,0,0.4)',
+                    transition: 'left 80ms linear',
+                  }}
+                />
+              )}
+
+              {/* Rótulos abaixo */}
+              <div className="relative h-4">
+                {timelineBlocks.map((b, i) => (
+                  <span
+                    key={i}
+                    className="absolute font-mono text-[9px] truncate"
+                    style={{
+                      left: `${b.fraction * 100}%`,
+                      transform: i === 0 ? 'none' : 'translateX(-50%)',
+                      color: currentMarkerIdx === i ? b.color : 'var(--color-muted)',
+                      opacity: currentMarkerIdx === i ? 1 : 0.5,
+                    }}
+                  >
+                    {b.name}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -194,6 +311,7 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
               isActive={activeExt === ext}
               onPlay={() => handlePlay(ext)}
               onStop={handleStop}
+              onProgress={handleProgress}
               songSlug={songSlug}
             />
           ))}
@@ -212,7 +330,6 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
           ↓ Baixar os 4 MIDIs — música completa (.zip)
         </button>
 
-        {/* Modo avançado */}
         <div className="text-center">
           <button
             onClick={onAdvanced}

@@ -13,10 +13,11 @@ async function ensureSynths(): Promise<void> {
   await Tone.start()
   if (synth) return
 
-  reverbNode = new Tone.Reverb({ decay: 2, wet: 0.25 }).toDestination()
+  reverbNode = new Tone.Reverb({ decay: 1.5, wet: 0.12 }).toDestination()
+  // triangle: limpo o suficiente para 4-6 notas simultâneas sem embaralhar
   synth = new Tone.PolySynth(Tone.Synth, {
-    oscillator: { type: 'fatsawtooth', count: 3, spread: 24 } as Tone.OmniOscillatorOptions,
-    envelope: { attack: 0.03, decay: 0.3, sustain: 0.4, release: 0.8 },
+    oscillator: { type: 'triangle' } as Tone.OmniOscillatorOptions,
+    envelope: { attack: 0.01, decay: 0.18, sustain: 0.25, release: 0.5 },
   }).connect(reverbNode)
   synth.volume.value = SYNTH_DB
 

@@ -19,12 +19,13 @@ interface Props {
   isActive: boolean
   onPlay: () => void
   onStop: () => void
+  onProgress?: (p: number) => void
   songSlug: string
 }
 
 export function MiniPlayer({
   chords, markers, ext, label, tagline, color, genre, bpm,
-  isActive, onPlay, onStop, songSlug,
+  isActive, onPlay, onStop, onProgress, songSlug,
 }: Props) {
   const [progress, setProgress] = useState(0)
   const startRef = useRef<number>(0)
@@ -88,7 +89,9 @@ export function MiniPlayer({
     timerRef.current = setInterval(() => {
       if (!mountedRef.current) return
       const elapsed = Date.now() - startRef.current
-      setProgress(Math.min(elapsed / totalMs, 1))
+      const p = Math.min(elapsed / totalMs, 1)
+      setProgress(p)
+      onProgress?.(p)
     }, 80)
 
     return () => {
