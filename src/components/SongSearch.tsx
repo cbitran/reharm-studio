@@ -31,6 +31,7 @@ export interface SongAnalysis {
 
 interface Props {
   onAnalysis: (analysis: SongAnalysis, chords: string) => void
+  onSelect?: (title: string, artist: string, cover: string | null) => void
   targetStyle: string
   targetBpm: number
 }
@@ -44,7 +45,7 @@ const SECTION_COLORS: Record<string, string> = {
   'Drop 2': '#7ad1a8', 'Break': '#e8c87a', 'Outro': '#7e7c78',
 }
 
-export function SongSearch({ onAnalysis, targetStyle, targetBpm }: Props) {
+export function SongSearch({ onAnalysis, onSelect, targetStyle, targetBpm }: Props) {
   const { t, i18n } = useTranslation()
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<SpotifySuggestion[]>([])
@@ -91,6 +92,7 @@ export function SongSearch({ onAnalysis, targetStyle, targetBpm }: Props) {
     setQuery(`${s.artist} — ${s.title}`)
     setShowDropdown(false)
     setSuggestions([])
+    onSelect?.(s.title, s.artist, s.cover ?? null)
   }
 
   const handleClear = () => {
