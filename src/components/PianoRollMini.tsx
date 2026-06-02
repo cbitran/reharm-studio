@@ -39,7 +39,6 @@ export function PianoRollMini({ events, totalTicks, progress, color }: Props) {
         background: 'var(--color-bg)',
         borderRadius: 6,
         overflow: 'hidden',
-        marginTop: 8,
         userSelect: 'none',
       }}
     >
