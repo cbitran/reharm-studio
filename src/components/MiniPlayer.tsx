@@ -37,7 +37,7 @@ export function MiniPlayer({
   }, [])
 
   const { pe, be } = useMemo(
-    () => genEvents(chords, ext, genre, 0.58, 'antecip'),
+    () => genEvents(chords, ext, genre, 0.58, 'off'),
     [chords, ext, genre],
   )
 

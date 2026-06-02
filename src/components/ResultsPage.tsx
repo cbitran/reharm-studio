@@ -90,7 +90,7 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
   const handleDownloadAll = () => {
     const files: Record<string, Uint8Array> = {}
     for (const { ext, label } of EXT_CONFIGS) {
-      const { pe, be } = genEvents(fullSong.chords, ext, genre, 0.58, 'antecip')
+      const { pe, be } = genEvents(fullSong.chords, ext, genre, 0.58, 'off')
       const midi = midiFile([
         trackBytes([], bpm, 'Tempo'),
         trackBytes(pe, null, 'Piano'),
