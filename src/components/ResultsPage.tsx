@@ -1,8 +1,9 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { zipSync } from 'fflate'
 import { parseProg } from '../core/parser'
 import { genEvents } from '../core/groove'
 import { trackBytes, midiFile } from '../core/midi-writer'
+import { warmupAudio } from '../audio/player'
 import { GENRES } from '../genres'
 import { MiniPlayer } from './MiniPlayer'
 import type { Extension } from '../types'
@@ -27,6 +28,9 @@ const EXT_CONFIGS: { ext: Extension; label: string; tagline: string; color: stri
 
 export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack }: Props) {
   const [activeExt, setActiveExt] = useState<Extension | null>(null)
+
+  // Pré-aquece synths logo que a tela monta — elimina delay no primeiro play
+  useEffect(() => { warmupAudio().catch(() => {}) }, [])
 
   const genre = GENRES[genreName] ?? GENRES['House']!
   const { chords } = useMemo(() => parseProg(analysis.progression), [analysis.progression])

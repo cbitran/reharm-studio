@@ -212,21 +212,12 @@ export default function App() {
 
       {/* Header */}
       <header className="mb-10">
-        <div
-          className="font-mono text-[10px] uppercase tracking-[4px] mb-3"
-          style={{ color: 'var(--color-muted)' }}
-        >
-          {t('hero.kicker')}
-        </div>
         <h1
           className="font-sans text-5xl font-bold leading-tight"
           style={{ color: 'var(--color-ink)' }}
         >
           {t('hero.title')}
         </h1>
-        <p className="text-base mt-2 max-w-lg leading-relaxed" style={{ color: 'var(--color-muted)' }}>
-          {t('hero.subtitle')}
-        </p>
       </header>
 
       {/* 01 — Acordes */}

@@ -226,14 +226,17 @@ Remix Preview + Campo Harmônico com badges por acorde:
 - 🔴 Foge do contexto
 Clicar no badge → explicação de 2 linhas do Groq.
 
-### Seções pendentes (escrever na próxima sessão)
-- Seção 2: Botão "Chamar IA" — posição, estados
-- Seção 3: Wizard detalhado
-- Seção 4: Context-awareness quando IA entra no meio
-- Seção 5: Tela de resultado/sugestão
-- Seção 6: Campo Harmônico com AI Coach
-- Seção 7: Remix Preview (sem mudanças estruturais)
-- Seção 8: O que não muda
+### Seções 2–8 (redigidas 01/06/2026 — ver spec completo)
+
+`docs/superpowers/specs/2026-06-01-ux-redesign-v2.md`
+
+- Seção 2: Botão no Navbar, 4 estados, observação silenciosa sem calls automáticas
+- Seção 3: Wizard modal 4 passos (Música → Estilo → BPM → Feeling)
+- Seção 4: Painel lateral 360px, IA abre com contexto já lido
+- Seção 5: Chips de acordes + ações Aceitar/Editar/Descartar
+- Seção 6: Badges 🟢🟡🔴 por acorde, popover Groq, 1 call por mudança
+- Seção 7: Remix Preview sem mudanças estruturais
+- Seção 8: Lista do que não muda + novas chaves i18n
 
 ### Implicação técnica principal
 `analyze-song.ts` precisa receber style + BPM + feeling do usuário.

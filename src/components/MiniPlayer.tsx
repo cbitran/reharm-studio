@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { genEvents, TPQ } from '../core/groove'
 import { trackBytes, midiFile, downloadMidi } from '../core/midi-writer'
 import { playEvents, stopAll } from '../audio/player'
+import { reVoice } from '../core/reharmonizer'
+import { NOTE_NAMES } from '../core/parser'
 import type { ParsedChord, Extension, GenreDefinition } from '../types'
 
 interface Props {
@@ -36,6 +38,15 @@ export function MiniPlayer({
     () => genEvents(chords, ext, genre, 0.58, 'antecip'),
     [chords, ext, genre],
   )
+
+  // Notas do primeiro acorde para exibição visual
+  const noteChips = useMemo(() => {
+    if (!chords.length) return []
+    const first = chords[0]!
+    return reVoice(first.intervals, ext).map(interval =>
+      NOTE_NAMES[(first.root + interval) % 12]!,
+    )
+  }, [chords, ext])
 
   const totalMs = useMemo(() => {
     const secsPerTick = 60 / bpm / TPQ
@@ -127,18 +138,38 @@ export function MiniPlayer({
           {isActive ? '■' : '▶'}
         </button>
 
-        <div
-          className="flex-1 h-2 rounded-full overflow-hidden"
-          style={{ background: 'var(--color-bg)' }}
-        >
+        <div className="flex-1 flex flex-col gap-2">
+          {/* Notas do primeiro acorde */}
+          <div className="flex flex-wrap gap-1.5">
+            {noteChips.map((note, i) => (
+              <span
+                key={i}
+                className="font-mono text-[11px] px-2 py-0.5 rounded-md"
+                style={{
+                  background: `${color}22`,
+                  color,
+                  border: `1px solid ${color}44`,
+                }}
+              >
+                {note}
+              </span>
+            ))}
+          </div>
+
+          {/* Barra de progresso */}
           <div
-            className="h-full rounded-full"
-            style={{
-              width: `${progress * 100}%`,
-              background: color,
-              transition: isActive ? 'none' : 'width 0.3s ease',
-            }}
-          />
+            className="h-1.5 rounded-full overflow-hidden"
+            style={{ background: 'var(--color-bg)' }}
+          >
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${progress * 100}%`,
+                background: color,
+                transition: isActive ? 'none' : 'width 0.3s ease',
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -4,24 +4,33 @@ import { createTimbreSynth } from './timbres'
 
 let synth: Tone.PolySynth | null = null
 let bass: Tone.MonoSynth | null = null
+let reverbNode: Tone.Reverb | null = null
+
+const SYNTH_DB = -13
+const BASS_DB = -10
 
 async function ensureSynths(): Promise<void> {
   await Tone.start()
   if (synth) return
 
-  const reverb = new Tone.Reverb({ decay: 2, wet: 0.25 }).toDestination()
+  reverbNode = new Tone.Reverb({ decay: 2, wet: 0.25 }).toDestination()
   synth = new Tone.PolySynth(Tone.Synth, {
     oscillator: { type: 'fatsawtooth', count: 3, spread: 24 } as Tone.OmniOscillatorOptions,
     envelope: { attack: 0.03, decay: 0.3, sustain: 0.4, release: 0.8 },
-  }).connect(reverb)
-  synth.volume.value = -13
+  }).connect(reverbNode)
+  synth.volume.value = SYNTH_DB
 
   bass = new Tone.MonoSynth({
     oscillator: { type: 'sawtooth' },
     filterEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.3, baseFrequency: 120, octaves: 2.5 },
     envelope: { attack: 0.01, decay: 0.2, sustain: 0.4, release: 0.4 },
   }).toDestination()
-  bass.volume.value = -10
+  bass.volume.value = BASS_DB
+}
+
+// Pré-aquece o contexto de áudio após gesto do usuário — elimina delay no primeiro play
+export async function warmupAudio(): Promise<void> {
+  await ensureSynths()
 }
 
 function midiToNote(midi: number): string {
@@ -38,8 +47,12 @@ export async function playEvents(
   await ensureSynths()
   if (!synth || !bass) return
 
+  // Restaura volumes caso stopAll() tenha silenciado
+  synth.volume.value = SYNTH_DB
+  bass.volume.value = BASS_DB
+
   const secsPerTick = 60 / bpm / tpq
-  const now = Tone.now() + 0.1
+  const now = Tone.now() + 0.05
 
   pianoEvents.forEach(({ tick, duration, note, velocity }) => {
     synth!.triggerAttackRelease(
@@ -76,7 +89,9 @@ export async function previewChord(root: number, intervals: number[]): Promise<v
 }
 
 export function stopAll(): void {
-  synth?.releaseAll()
+  // Silencia imediatamente — cancela notas agendadas mesmo com timestamp futuro
+  if (synth) { synth.volume.value = -Infinity; synth.releaseAll() }
+  if (bass) bass.volume.value = -Infinity
   Tone.Transport.cancel()
 }
 
