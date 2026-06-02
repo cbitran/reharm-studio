@@ -159,7 +159,7 @@ export function MiniPlayer({
       trackBytes(pde, null, 'Pad'),
       trackBytes(le, null, 'Lead'),
     ])
-    downloadMidi(midi, `${songSlug}-${ext}.mid`)
+    downloadMidi(midi, `${songSlug}-${label.replaceAll(' ', '')}.mid`)
   }
 
   return (

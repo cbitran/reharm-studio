@@ -319,14 +319,16 @@ export function SidebarPage({ onAdvanced }: Props) {
                 </div>
               </div>
 
-              {/* Feeling */}
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: 'var(--color-muted)' }}>Feeling</p>
+              {/* Feeling — em breve */}
+              <div style={{ opacity: 0.45, pointerEvents: 'none' }}>
+                <p className="font-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: 'var(--color-muted)' }}>
+                  Feeling <span style={{ fontSize: 9, textTransform: 'none', letterSpacing: 0 }}>· em breve</span>
+                </p>
                 <div className="flex flex-wrap gap-1.5">
                   {FEELING_CHIPS.map(f => (
-                    <button key={f} onClick={() => toggleFeeling(f)}
-                      className="px-3 py-1.5 text-xs rounded-xl font-medium transition-all"
-                      style={chip(feeling.includes(f))}>{f}</button>
+                    <button key={f} tabIndex={-1}
+                      className="px-3 py-1.5 text-xs rounded-xl font-medium"
+                      style={chip(false)}>{f}</button>
                   ))}
                 </div>
               </div>
@@ -590,6 +592,9 @@ export function SidebarPage({ onAdvanced }: Props) {
               style={{ background: 'var(--color-card)', color: 'var(--color-primary)', border: '1px solid var(--color-border)' }}>
               ↓ Baixar os 4 MIDIs — 5 trilhas cada (.zip)
             </button>
+            <p className="text-center font-mono text-[10px] mt-2" style={{ color: 'var(--color-muted)' }}>
+              Piano · Bass · Arpejo · Pad · Lead — a bateria do preview não vai no MIDI
+            </p>
           </div>
         )}
 
