@@ -8,7 +8,7 @@ import { genEvents } from '../core/groove'
 import { genArpeggioEvents, genPadEvents, genLeadEvents } from '../core/arranger'
 import { trackBytes, midiFile } from '../core/midi-writer'
 import { buildScale } from '../core/scaleUtils'
-import { warmupAudio } from '../audio/player'
+import { warmupAudio, initAudio } from '../audio/player'
 import type { Extension, ParsedChord } from '../types'
 import type { SimpleWizardSong, SimpleWizardResult } from './SimpleWizard'
 import type { SectionMarker } from './ResultsPage'
@@ -61,6 +61,7 @@ export function SidebarPage({ onAdvanced }: Props) {
   }, [])
 
   const handleGenerate = () => {
+    initAudio().catch(() => {})
     if (!analysis || !song) return
     setResult({ analysis, song, genreName, bpm: bpmValue })
     setActiveExt(null)
@@ -135,7 +136,7 @@ export function SidebarPage({ onAdvanced }: Props) {
     return idx
   }, [activeProgress, activeExt, fullSong.markers])
 
-  const handlePlay = useCallback((ext: Extension) => { setActiveProgress(0); setActiveExt(ext) }, [])
+  const handlePlay = useCallback((ext: Extension) => { initAudio().catch(() => {}); setActiveProgress(0); setActiveExt(ext) }, [])
   const handleStop = useCallback(() => { setActiveExt(null); setActiveProgress(0) }, [])
 
   const durationLabel = useMemo(() => {
