@@ -3,7 +3,9 @@ import { ProgressionCard } from './ProgressionCard'
 import type { SuggestedProgression } from '../types/progressions'
 
 interface Props {
-  song: string
+  artist: string
+  title: string
+  mainChords: string
   style: string
   bpm: number
   feeling: string
@@ -11,7 +13,7 @@ interface Props {
   onChordClick: (chord: string) => void
 }
 
-export function ProgressionBrowser({ song, style, bpm, feeling, onLoadTab, onChordClick }: Props) {
+export function ProgressionBrowser({ artist, title, mainChords, style, bpm, feeling, onLoadTab, onChordClick }: Props) {
   const [progressions, setProgressions] = useState<SuggestedProgression[]>([])
   const [loading, setLoading] = useState(false)
   const [initialized, setInitialized] = useState(false)
@@ -22,7 +24,7 @@ export function ProgressionBrowser({ song, style, bpm, feeling, onLoadTab, onCho
       const res = await fetch('/api/suggest-progressions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ song, style, bpm, feeling }),
+        body: JSON.stringify({ artist, title, style, bpm, feeling, mainChords }),
       })
       const data = await res.json() as { progressions: Omit<SuggestedProgression, 'id'>[] }
       const newOnes = (data.progressions ?? []).map(p => ({
@@ -36,7 +38,7 @@ export function ProgressionBrowser({ song, style, bpm, feeling, onLoadTab, onCho
     } finally {
       setLoading(false)
     }
-  }, [song, style, bpm, feeling])
+  }, [artist, title, mainChords, style, bpm, feeling])
 
   useEffect(() => {
     fetchMore()
@@ -77,7 +79,7 @@ export function ProgressionBrowser({ song, style, bpm, feeling, onLoadTab, onCho
       {loading && progressions.length === 0 ? (
         <div className="flex items-center py-4">
           <span className="animate-pulse font-mono text-sm" style={{ color: 'var(--color-muted)' }}>
-            Gerando progressões para {style} {bpm} BPM...
+            Analisando "{title}" → gerando remixes {style} {bpm} BPM...
           </span>
         </div>
       ) : (

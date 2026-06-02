@@ -1,5 +1,5 @@
 // POST /api/suggest-progressions
-// Body: { song, style, bpm, feeling }
+// Body: { artist, title, style, bpm, feeling, mainChords? }
 // Returns: { progressions: SuggestedProgression[] }
 
 export const config = { runtime: 'edge' }
@@ -44,41 +44,59 @@ export default async function handler(req: Request) {
     return new Response('Method not allowed', { status: 405 })
   }
 
-  const { song, style, bpm, feeling } = await req.json() as {
-    song: string
+  const { artist, title, style, bpm, feeling, mainChords } = await req.json() as {
+    artist: string
+    title: string
     style: string
     bpm: number
     feeling: string
+    mainChords?: string
   }
 
-  const prompt = `Você é um produtor musical especialista em múltiplos gêneros.
-O usuário quer remixar "${song}" no estilo ${style}, ${bpm} BPM, feeling: ${feeling}.
+  const mainChordsCtx = mainChords
+    ? `The main progression already in use is: ${mainChords}. Your suggestions must be DIFFERENT from this.`
+    : ''
 
-Gere EXATAMENTE 5 progressões de acordes diferentes para este contexto.
-Cada progressão deve ter 4 acordes com extensões ricas (maj9, m9, 7sus4, m7, maj7, etc).
+  const prompt = `You are a music producer and harmony expert specializing in remixes and dance music.
 
-Para cada progressão, sugira também um perfil de groove que se encaixe no estilo musical dela:
-- "pianoSteps": lista de 3-6 posições rítmicas (inteiros de 0 a 15, onde 0=tempo1, 4=tempo2, 8=tempo3, 12=tempo4, 2=contratempo do tempo1, 6=contratempo do tempo2, etc.)
-- "pianoDur": duração de cada nota em ticks (100=staccato curto, 300=médio, 700=legato longo) — base: 480 ticks = 1 tempo
-- "bassSteps": posições do baixo (normalmente mais esparso que o piano)
-- "bassDur": duração das notas do baixo em ticks
-- "swing": porcentagem de swing de 50 (reto) a 72 (swing intenso)
-- "viradas": "off" (groove reto), "antecip" (antecipações suaves), ou "full" (viradas completas)
+THE ORIGINAL SONG: "${title}" by ${artist}
+REMIX STYLE: ${style}
+TARGET BPM: ${bpm} BPM
+FEELING: ${feeling}
+${mainChordsCtx}
 
-Exemplos de referência por estilo:
+STEP 1 — Identify the harmonic DNA of "${title}" by ${artist}:
+- What key and mode (major/minor/modal) is this song in?
+- What are its characteristic chord colors and emotional fingerprint?
+- What makes this song harmonically distinct?
+
+STEP 2 — Generate 5 remix progressions that:
+- Are ROOTED IN THE SAME KEY as the original song (or its parallel/relative key if the feeling demands)
+- Sound like authentic remixes of THIS specific song — not generic ${style} music
+- Each progression has 4 chords with rich extensions (maj9, m9, 7sus4, m7, maj7, 9, etc.) appropriate for ${style}
+- Have MUSICAL VARIETY across the 5 suggestions: explore darker, brighter, more tense, more open directions
+- Feel authentically connected to the mood of "${title}" while transformed into ${style} at ${bpm} BPM with feeling: ${feeling}
+
+STEP 3 — For each progression, suggest the groove that fits its specific mood and style:
+- "pianoSteps": 3-6 rhythmic positions (integers 0-15, where 0=beat1, 4=beat2, 8=beat3, 12=beat4, 2=and-of-1, 6=and-of-2...)
+- "pianoDur": note duration in ticks (100=staccato, 300=medium, 700=legato) at 480 ticks per beat
+- "bassSteps": bass positions (sparser than piano)
+- "bassDur": bass note duration in ticks
+- "swing": 50 (straight) to 72 (heavy swing)
+- "viradas": "off" (straight), "antecip" (anticipations), or "full" (full fills)
+
+Groove references by style:
 - House: pianoSteps:[2,6,10,14] pianoDur:150 bassSteps:[0,8] bassDur:200 swing:56 viradas:"antecip"
 - Deep House: pianoSteps:[2,6,10,14] pianoDur:140 bassSteps:[0,8,14] bassDur:180 swing:55 viradas:"antecip"
 - Jazz: pianoSteps:[0,3,6,9,12] pianoDur:220 bassSteps:[0,2,4,6,8,10,12,14] bassDur:180 swing:66 viradas:"full"
 - Lo-fi: pianoSteps:[0,8] pianoDur:700 bassSteps:[0,8] bassDur:600 swing:62 viradas:"off"
-- Gospel: pianoSteps:[0,2,6,8,10,14] pianoDur:130 bassSteps:[0,4,8,12,14] bassDur:140 swing:54 viradas:"full"
+- Gospel House: pianoSteps:[0,2,6,8,10,14] pianoDur:130 bassSteps:[0,4,8,12,14] bassDur:140 swing:54 viradas:"full"
 
-Adapte o groove ao feeling e à música — uma balada pede grooves mais espaçados e legatos, um track agitado pede stabs curtos e densos.
-
-Responda APENAS com JSON válido, sem markdown, sem explicação:
+Respond ONLY with valid JSON array, no markdown, no explanation:
 [
   {
-    "name": "nome criativo em português",
-    "mood": "adjetivo · adjetivo",
+    "name": "creative name in Portuguese",
+    "mood": "adjective · adjective",
     "chords": ["Xm9", "Ymaj7", "Zsus4", "Wm7"],
     "groove": {
       "pianoSteps": [2,6,10,14],
@@ -89,7 +107,7 @@ Responda APENAS com JSON válido, sem markdown, sem explicação:
       "viradas": "antecip"
     }
   },
-  ...5 itens total
+  ...5 items total
 ]`
 
   try {
@@ -102,8 +120,8 @@ Responda APENAS com JSON válido, sem markdown, sem explicação:
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.8,
-        max_tokens: 900,
+        temperature: 0.75,
+        max_tokens: 1000,
       }),
     })
 

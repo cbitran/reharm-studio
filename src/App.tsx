@@ -192,7 +192,9 @@ export default function App() {
         {parsedChords.length > 0 && aiSession.song && (
           <section className="mb-10">
             <ProgressionBrowser
-              song={`${aiSession.song.artist} - ${aiSession.song.title}`}
+              artist={aiSession.song.artist}
+              title={aiSession.song.title}
+              mainChords={text}
               style={genreName}
               bpm={bpm}
               feeling={aiSession.feeling.join(', ')}
@@ -392,7 +394,9 @@ export default function App() {
       {parsedChords.length > 0 && aiSession.song && (
         <section id="progression-browser" className="mb-10 scroll-mt-6">
           <ProgressionBrowser
-            song={`${aiSession.song.artist} - ${aiSession.song.title}`}
+            artist={aiSession.song.artist}
+            title={aiSession.song.title}
+            mainChords={text}
             style={genreName}
             bpm={bpm}
             feeling={aiSession.feeling.join(', ')}
