@@ -212,8 +212,13 @@ export function SidebarPage({ onAdvanced }: Props) {
 
       {/* ── SIDEBAR ── */}
       <aside
-        className="w-72 shrink-0 flex flex-col overflow-y-auto px-5 py-7"
-        style={{ borderRight: '1px solid var(--color-border)', background: 'var(--color-card)' }}
+        className="shrink-0 flex flex-col overflow-y-auto px-5 py-7"
+        style={{
+          width: result ? '288px' : '480px',
+          transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+          borderRight: '1px solid var(--color-border)',
+          background: 'var(--color-card)',
+        }}
       >
         {/* Busca */}
         <SongSearch
@@ -362,22 +367,15 @@ export function SidebarPage({ onAdvanced }: Props) {
       </aside>
 
       {/* ── CONTEÚDO ── */}
-      <main className="flex-1 overflow-y-auto px-8 py-8">
-        {!result ? (
-          <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
-            <div className="text-center">
-              <p
-                className="font-sans text-base font-medium mb-1.5"
-                style={{ color: 'var(--color-ink)', opacity: 0.35 }}
-              >
-                Configure uma música na sidebar
-              </p>
-              <p className="font-mono text-sm" style={{ color: 'var(--color-muted)', opacity: 0.5 }}>
-                e clique em "Gerar remix" para ver os acordes
-              </p>
-            </div>
-          </div>
-        ) : (
+      <main
+        className="flex-1 overflow-y-auto px-8 py-8"
+        style={{
+          opacity: result ? 1 : 0,
+          transition: 'opacity 0.4s ease 0.3s',
+          pointerEvents: result ? 'auto' : 'none',
+        }}
+      >
+        {result ? (
           <div>
             {/* Song header */}
             <div className="flex items-center gap-4 mb-6">
@@ -522,7 +520,7 @@ export function SidebarPage({ onAdvanced }: Props) {
               ↓ Baixar os 4 MIDIs — 5 trilhas cada (.zip)
             </button>
           </div>
-        )}
+        ) : null}
       </main>
     </div>
   )
