@@ -322,6 +322,7 @@ export function ResultsPage({ analysis, song, genreName, bpm, onAdvanced, onBack
               tagline={tagline}
               color={color}
               genre={genre}
+              genreName={genreName}
               bpm={bpm}
               isActive={activeExt === ext}
               onPlay={() => handlePlay(ext)}
