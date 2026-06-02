@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { PianoRollMini } from './PianoRollMini'
 import { genEvents, TPQ } from '../core/groove'
 import { genArpeggioEvents, genPadEvents, genLeadEvents } from '../core/arranger'
 import { genKickEvents, genClapEvents, genHihatEvents } from '../core/kick-pattern'
@@ -34,6 +35,7 @@ export function MiniPlayer({
   isActive, onPlay, onStop, onProgress, songSlug,
 }: Props) {
   const [progress, setProgress] = useState(0)
+  const [showRoll, setShowRoll] = useState(false)
   const startRef = useRef<number>(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const mountedRef = useRef(true)
@@ -183,6 +185,18 @@ export function MiniPlayer({
             </span>
           )}
           <button
+            onClick={() => setShowRoll(v => !v)}
+            className="font-mono text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+            style={{
+              color: showRoll ? color : 'var(--color-muted)',
+              border: '1px solid var(--color-border)',
+              background: showRoll ? `${color}18` : 'var(--color-card)',
+            }}
+            title="Piano Roll"
+          >
+            ▦ Roll
+          </button>
+          <button
             onClick={handleExport}
             className="font-mono text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
             style={{
@@ -256,6 +270,14 @@ export function MiniPlayer({
               />
             ))}
           </div>
+          {showRoll && (
+            <PianoRollMini
+              events={filteredPe}
+              totalTicks={totalTicks}
+              progress={progress}
+              color={color}
+            />
+          )}
         </div>
       </div>
     </div>
