@@ -215,22 +215,14 @@ export function SidebarPage({ onAdvanced }: Props) {
         className="w-72 shrink-0 flex flex-col overflow-y-auto px-5 py-7"
         style={{ borderRight: '1px solid var(--color-border)', background: 'var(--color-card)' }}
       >
-        {/* Logo */}
-        <div className="mb-7">
-          <h1 className="font-sans text-xl font-bold" style={{ color: 'var(--color-ink)' }}>
-            ChordFlip
-          </h1>
-          <p className="font-mono text-[10px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
-            Transforme qualquer música em acordes ricos para remix
-          </p>
-        </div>
-
         {/* Busca */}
         <SongSearch
           onAnalysis={handleAnalysis}
           onSelect={(title, artist, cover) => setSong({ title, artist, cover })}
           targetStyle={genreName}
           targetBpm={GENRES[genreName]?.bpm ?? 120}
+          hideHeader
+          stackLayout
         />
 
         {/* Configurações — aparecem após análise */}

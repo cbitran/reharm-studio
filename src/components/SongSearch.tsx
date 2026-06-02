@@ -41,6 +41,8 @@ interface Props {
   onSelect?: (title: string, artist: string, cover: string | null) => void
   targetStyle: string
   targetBpm: number
+  hideHeader?: boolean
+  stackLayout?: boolean
 }
 
 function formatDuration(secs: number): string {
@@ -52,7 +54,7 @@ const SECTION_COLORS: Record<string, string> = {
   'Drop 2': '#7ad1a8', 'Break': '#e8c87a', 'Outro': '#7e7c78',
 }
 
-export function SongSearch({ onAnalysis, onSelect, targetStyle, targetBpm }: Props) {
+export function SongSearch({ onAnalysis, onSelect, targetStyle, targetBpm, hideHeader, stackLayout }: Props) {
   const { t, i18n } = useTranslation()
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<SpotifySuggestion[]>([])
@@ -140,17 +142,19 @@ export function SongSearch({ onAnalysis, onSelect, targetStyle, targetBpm }: Pro
 
   return (
     <div className="space-y-4">
-      <div className="card p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-muted)' }}>
-            {t('sections.search')}
-          </p>
-          <HelpIcon tip="Digite o nome da música ou artista. Selecione nas sugestões e clique em Analisar para gerar o guia do remix." />
-        </div>
+      <div className={stackLayout ? '' : 'card p-5'}>
+        {!hideHeader && (
+          <div className="flex items-center gap-2 mb-4">
+            <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-muted)' }}>
+              {t('sections.search')}
+            </p>
+            <HelpIcon tip="Digite o nome da música ou artista. Selecione nas sugestões e clique em Analisar para gerar o guia do remix." />
+          </div>
+        )}
 
         {/* Campo de busca com autocomplete */}
-        <div className="flex flex-wrap gap-3">
-          <div className="flex-1 min-w-[260px] relative" ref={wrapperRef}>
+        <div className={stackLayout ? 'flex flex-col gap-2' : 'flex flex-wrap gap-3'}>
+          <div className={stackLayout ? 'relative w-full' : 'flex-1 min-w-[260px] relative'} ref={wrapperRef}>
             <div className="relative">
               <input
                 type="text"
@@ -224,7 +228,7 @@ export function SongSearch({ onAnalysis, onSelect, targetStyle, targetBpm }: Pro
           <button
             onClick={handleAnalyze}
             disabled={analyzing || !selected}
-            className="btn-primary px-5 py-2.5 text-sm font-semibold rounded-xl disabled:opacity-40 whitespace-nowrap"
+            className={`btn-primary px-5 py-2.5 text-sm font-semibold rounded-xl disabled:opacity-40 whitespace-nowrap${stackLayout ? ' w-full' : ''}`}
           >
             {analyzing ? (
               <span className="flex items-center gap-2">
