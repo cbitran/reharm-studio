@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { genEvents, TPQ } from '../core/groove'
 import { genArpeggioEvents, genPadEvents, genLeadEvents } from '../core/arranger'
-import { genKickEvents } from '../core/kick-pattern'
+import { genKickEvents, genClapEvents, genHihatEvents } from '../core/kick-pattern'
 import { buildTrackActiveRanges, filterBySection } from '../core/density'
 import type { TrackName } from '../core/density'
 import { trackBytes, midiFile, downloadMidi } from '../core/midi-writer'
@@ -48,7 +48,9 @@ export function MiniPlayer({
     [chords, ext, genre],
   )
 
-  const ke  = useMemo(() => genKickEvents(genreName, chords.length), [genreName, chords.length])
+  const ke  = useMemo(() => genKickEvents(genreName, chords.length),  [genreName, chords.length])
+  const cle = useMemo(() => genClapEvents(genreName, chords.length),  [genreName, chords.length])
+  const hhe = useMemo(() => genHihatEvents(genreName, chords.length), [genreName, chords.length])
   const ae  = useMemo(() => genArpeggioEvents(chords, ext, scale), [chords, ext, scale])
   const pde = useMemo(() => genPadEvents(chords, ext, scale), [chords, ext, scale])
   const le  = useMemo(() => genLeadEvents(chords, ext, scale), [chords, ext, scale])
@@ -61,6 +63,8 @@ export function MiniPlayer({
       : events
 
   const filteredKe  = useMemo(() => mkFiltered(ke,  'kick'),     [ke,  markers, totalTicks, genreName])   // eslint-disable-line react-hooks/exhaustive-deps
+  const filteredCle = useMemo(() => mkFiltered(cle, 'clap'),     [cle, markers, totalTicks, genreName])   // eslint-disable-line react-hooks/exhaustive-deps
+  const filteredHhe = useMemo(() => mkFiltered(hhe, 'hihat'),    [hhe, markers, totalTicks, genreName])   // eslint-disable-line react-hooks/exhaustive-deps
   const filteredPe  = useMemo(() => mkFiltered(pe,  'piano'),    [pe,  markers, totalTicks, genreName])   // eslint-disable-line react-hooks/exhaustive-deps
   const filteredBe  = useMemo(() => mkFiltered(be,  'bass'),     [be,  markers, totalTicks, genreName])   // eslint-disable-line react-hooks/exhaustive-deps
   const filteredAe  = useMemo(() => mkFiltered(ae,  'arpeggio'), [ae,  markers, totalTicks, genreName])   // eslint-disable-line react-hooks/exhaustive-deps
@@ -78,10 +82,13 @@ export function MiniPlayer({
 
   const totalMs = useMemo(() => {
     const secsPerTick = 60 / bpm / TPQ
-    const all = [...filteredPe, ...filteredBe, ...filteredKe, ...filteredAe, ...filteredPde, ...filteredLe]
+    const all = [
+      ...filteredKe, ...filteredCle, ...filteredHhe,
+      ...filteredPe, ...filteredBe, ...filteredAe, ...filteredPde, ...filteredLe,
+    ]
     const lastTick = all.reduce((max, e) => Math.max(max, e.tick + e.duration), 0)
     return lastTick * secsPerTick * 1000 + 300
-  }, [filteredPe, filteredBe, filteredKe, filteredAe, filteredPde, filteredLe, bpm])
+  }, [filteredKe, filteredCle, filteredHhe, filteredPe, filteredBe, filteredAe, filteredPde, filteredLe, bpm])
 
   // Seção atual com base no progresso
   const currentSection = useMemo(() => {
@@ -106,6 +113,8 @@ export function MiniPlayer({
 
     playMiniArrangement({
       kickEvents: filteredKe,
+      clapEvents: filteredCle,
+      hihatEvents: filteredHhe,
       pianoEvents: filteredPe,
       bassEvents: filteredBe,
       arpeggioEvents: filteredAe,

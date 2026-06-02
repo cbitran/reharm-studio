@@ -9,6 +9,8 @@ let onEndTimeoutId: ReturnType<typeof setTimeout> | null = null
 
 // Mini arrangement synths (isolated from playEvents and playUnified)
 let miniKick: Tone.MembraneSynth | null = null
+let miniClap: Tone.NoiseSynth | null = null
+let miniHihat: Tone.NoiseSynth | null = null
 let miniBass2: Tone.MonoSynth | null = null
 let miniPiano: Tone.PolySynth | null = null
 let miniArpeggio: Tone.Synth | null = null
@@ -113,6 +115,8 @@ export function stopAll(): void {
 
 export interface MiniArrangementOptions {
   kickEvents: MidiEvent[]
+  clapEvents: MidiEvent[]
+  hihatEvents: MidiEvent[]
   pianoEvents: MidiEvent[]
   bassEvents: MidiEvent[]
   arpeggioEvents: MidiEvent[]
@@ -126,6 +130,8 @@ export interface MiniArrangementOptions {
 export function stopMiniArrangement(): void {
   if (miniEndTimeout) { clearTimeout(miniEndTimeout); miniEndTimeout = null }
   if (miniKick) { miniKick.dispose(); miniKick = null }
+  if (miniClap) { miniClap.dispose(); miniClap = null }
+  if (miniHihat) { miniHihat.dispose(); miniHihat = null }
   if (miniBass2) { miniBass2.dispose(); miniBass2 = null }
   if (miniPiano) { miniPiano.dispose(); miniPiano = null }
   if (miniArpeggio) { miniArpeggio.dispose(); miniArpeggio = null }
@@ -136,7 +142,8 @@ export function stopMiniArrangement(): void {
 }
 
 export async function playMiniArrangement({
-  kickEvents, pianoEvents, bassEvents, arpeggioEvents, padEvents, leadEvents,
+  kickEvents, clapEvents, hihatEvents,
+  pianoEvents, bassEvents, arpeggioEvents, padEvents, leadEvents,
   bpm, tpq, onEnd,
 }: MiniArrangementOptions): Promise<void> {
   stopMiniArrangement()
@@ -151,19 +158,35 @@ export async function playMiniArrangement({
   }).toDestination()
   miniKick.volume.value = -4
 
+  // Clap — noise burst curto
+  miniClap = new Tone.NoiseSynth({
+    noise: { type: 'white' },
+    envelope: { attack: 0.005, decay: 0.08, sustain: 0, release: 0.05 },
+  }).toDestination()
+  miniClap.volume.value = -14
+
+  // Hi-hat — noise mais curto e seco
+  miniHihat = new Tone.NoiseSynth({
+    noise: { type: 'white' },
+    envelope: { attack: 0.001, decay: 0.025, sustain: 0, release: 0.01 },
+  }).toDestination()
+  miniHihat.volume.value = -22
+
+  // Reese bass — dois saws detonados com filtro lowpass
+  miniBass2 = new Tone.MonoSynth({
+    oscillator: { type: 'fatsawtooth', spread: 20, count: 2 } as Tone.OmniOscillatorOptions,
+    filter: { type: 'lowpass', frequency: 350, Q: 3 },
+    filterEnvelope: { attack: 0.05, decay: 0.4, sustain: 0.3, baseFrequency: 80, octaves: 2 },
+    envelope: { attack: 0.02, decay: 0.2, sustain: 0.5, release: 0.8 },
+  }).toDestination()
+  miniBass2.volume.value = -8
+
   miniPianoReverb = new Tone.Reverb({ decay: 1.5, wet: 0.12 }).toDestination()
   miniPiano = new Tone.PolySynth(Tone.Synth, {
     oscillator: { type: 'triangle' } as Tone.OmniOscillatorOptions,
     envelope: { attack: 0.01, decay: 0.18, sustain: 0.25, release: 0.5 },
   }).connect(miniPianoReverb)
   miniPiano.volume.value = -13
-
-  miniBass2 = new Tone.MonoSynth({
-    oscillator: { type: 'sawtooth' },
-    filterEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.3, baseFrequency: 120, octaves: 2.5 },
-    envelope: { attack: 0.01, decay: 0.2, sustain: 0.4, release: 0.4 },
-  }).toDestination()
-  miniBass2.volume.value = -10
 
   miniArpeggio = new Tone.Synth({
     oscillator: { type: 'triangle' } as Tone.OmniOscillatorOptions,
@@ -188,6 +211,12 @@ export async function playMiniArrangement({
   kickEvents.forEach(({ tick, duration }) => {
     miniKick!.triggerAttackRelease('C1', Math.max(duration * secsPerTick, 0.05), now + tick * secsPerTick, 0.9)
   })
+  clapEvents.forEach(({ tick, duration, velocity }) => {
+    miniClap!.triggerAttackRelease(Math.max(duration * secsPerTick, 0.05), now + tick * secsPerTick, velocity / 127)
+  })
+  hihatEvents.forEach(({ tick, duration, velocity }) => {
+    miniHihat!.triggerAttackRelease(Math.max(duration * secsPerTick, 0.02), now + tick * secsPerTick, velocity / 127)
+  })
   pianoEvents.forEach(({ tick, duration, note, velocity }) => {
     miniPiano!.triggerAttackRelease(midiToNote(note), Math.max(duration * secsPerTick, 0.05), now + tick * secsPerTick, velocity / 127)
   })
@@ -204,7 +233,10 @@ export async function playMiniArrangement({
     miniLead!.triggerAttackRelease(midiToNote(note), Math.max(duration * secsPerTick, 0.05), now + tick * secsPerTick, velocity / 127)
   })
 
-  const allEvents = [...kickEvents, ...pianoEvents, ...bassEvents, ...arpeggioEvents, ...padEvents, ...leadEvents]
+  const allEvents = [
+    ...kickEvents, ...clapEvents, ...hihatEvents,
+    ...pianoEvents, ...bassEvents, ...arpeggioEvents, ...padEvents, ...leadEvents,
+  ]
   const lastTick = allEvents.reduce((max, e) => Math.max(max, e.tick + e.duration), 0)
   const totalMs = lastTick * secsPerTick * 1000
 

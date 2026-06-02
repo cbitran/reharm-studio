@@ -1,63 +1,63 @@
 import type { MidiEvent } from '../types'
 
 export type SectionType = 'intro' | 'buildup' | 'drop' | 'break' | 'outro' | 'default'
-export type TrackName = 'kick' | 'bass' | 'piano' | 'arpeggio' | 'pad' | 'lead'
+export type TrackName = 'kick' | 'clap' | 'hihat' | 'bass' | 'piano' | 'arpeggio' | 'pad' | 'lead'
 
 type TrackMask = Record<TrackName, boolean>
 type DensityTable = Record<SectionType, TrackMask>
 
 const HOUSE: DensityTable = {
-  intro:   { kick: false, bass: true,  piano: true,  arpeggio: false, pad: true,  lead: false },
-  buildup: { kick: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: false },
-  drop:    { kick: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
-  break:   { kick: false, bass: false, piano: true,  arpeggio: false, pad: true,  lead: false },
-  outro:   { kick: true,  bass: true,  piano: true,  arpeggio: false, pad: false, lead: false },
-  default: { kick: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
+  intro:   { kick: false, clap: false, hihat: true,  bass: true,  piano: true,  arpeggio: false, pad: true,  lead: false },
+  buildup: { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: false },
+  drop:    { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
+  break:   { kick: false, clap: false, hihat: false, bass: false, piano: true,  arpeggio: false, pad: true,  lead: false },
+  outro:   { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: false, pad: false, lead: false },
+  default: { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
 }
 
 const AFRO: DensityTable = {
-  intro:   { kick: false, bass: true,  piano: true,  arpeggio: false, pad: true,  lead: false },
-  buildup: { kick: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: false },
-  drop:    { kick: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
-  break:   { kick: false, bass: false, piano: true,  arpeggio: false, pad: true,  lead: false },
-  outro:   { kick: true,  bass: true,  piano: true,  arpeggio: false, pad: false, lead: false },
-  default: { kick: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
+  intro:   { kick: false, clap: false, hihat: true,  bass: true,  piano: true,  arpeggio: false, pad: true,  lead: false },
+  buildup: { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: false },
+  drop:    { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
+  break:   { kick: false, clap: false, hihat: false, bass: false, piano: true,  arpeggio: false, pad: true,  lead: false },
+  outro:   { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: false, pad: false, lead: false },
+  default: { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
 }
 
 const TECHNO: DensityTable = {
-  intro:   { kick: true,  bass: true,  piano: true,  arpeggio: false, pad: true,  lead: false },
-  buildup: { kick: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: false },
-  drop:    { kick: true,  bass: true,  piano: true,  arpeggio: true,  pad: false, lead: true  },
-  break:   { kick: false, bass: false, piano: false, arpeggio: false, pad: true,  lead: false },
-  outro:   { kick: true,  bass: true,  piano: true,  arpeggio: false, pad: false, lead: false },
-  default: { kick: true,  bass: true,  piano: true,  arpeggio: true,  pad: false, lead: true  },
+  intro:   { kick: true,  clap: false, hihat: true,  bass: true,  piano: true,  arpeggio: false, pad: true,  lead: false },
+  buildup: { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: false },
+  drop:    { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: false, lead: true  },
+  break:   { kick: false, clap: false, hihat: false, bass: false, piano: false, arpeggio: false, pad: true,  lead: false },
+  outro:   { kick: true,  clap: false, hihat: true,  bass: true,  piano: true,  arpeggio: false, pad: false, lead: false },
+  default: { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: false, lead: true  },
 }
 
 const LOFI: DensityTable = {
-  intro:   { kick: false, bass: true,  piano: true,  arpeggio: false, pad: true,  lead: false },
-  buildup: { kick: false, bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: false },
-  drop:    { kick: false, bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
-  break:   { kick: false, bass: false, piano: true,  arpeggio: false, pad: true,  lead: false },
-  outro:   { kick: false, bass: true,  piano: true,  arpeggio: false, pad: true,  lead: false },
-  default: { kick: false, bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
+  intro:   { kick: false, clap: false, hihat: true,  bass: true,  piano: true,  arpeggio: false, pad: true,  lead: false },
+  buildup: { kick: false, clap: false, hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: false },
+  drop:    { kick: false, clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
+  break:   { kick: false, clap: false, hihat: false, bass: false, piano: true,  arpeggio: false, pad: true,  lead: false },
+  outro:   { kick: false, clap: false, hihat: true,  bass: true,  piano: true,  arpeggio: false, pad: true,  lead: false },
+  default: { kick: false, clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
 }
 
 const POP: DensityTable = {
-  intro:   { kick: false, bass: true,  piano: true,  arpeggio: false, pad: true,  lead: false },
-  buildup: { kick: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: false },
-  drop:    { kick: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
-  break:   { kick: false, bass: false, piano: true,  arpeggio: false, pad: true,  lead: false },
-  outro:   { kick: true,  bass: true,  piano: true,  arpeggio: false, pad: false, lead: false },
-  default: { kick: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
+  intro:   { kick: false, clap: false, hihat: true,  bass: true,  piano: true,  arpeggio: false, pad: true,  lead: false },
+  buildup: { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: false },
+  drop:    { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
+  break:   { kick: false, clap: false, hihat: false, bass: false, piano: true,  arpeggio: false, pad: true,  lead: false },
+  outro:   { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: false, pad: false, lead: false },
+  default: { kick: true,  clap: true,  hihat: true,  bass: true,  piano: true,  arpeggio: true,  pad: true,  lead: true  },
 }
 
 const JAZZ: DensityTable = {
-  intro:   { kick: false, bass: true,  piano: true,  arpeggio: false, pad: false, lead: false },
-  buildup: { kick: false, bass: true,  piano: true,  arpeggio: true,  pad: false, lead: false },
-  drop:    { kick: false, bass: true,  piano: true,  arpeggio: true,  pad: false, lead: true  },
-  break:   { kick: false, bass: false, piano: true,  arpeggio: false, pad: false, lead: false },
-  outro:   { kick: false, bass: true,  piano: true,  arpeggio: false, pad: false, lead: false },
-  default: { kick: false, bass: true,  piano: true,  arpeggio: true,  pad: false, lead: true  },
+  intro:   { kick: false, clap: false, hihat: false, bass: true,  piano: true,  arpeggio: false, pad: false, lead: false },
+  buildup: { kick: false, clap: false, hihat: false, bass: true,  piano: true,  arpeggio: true,  pad: false, lead: false },
+  drop:    { kick: false, clap: false, hihat: false, bass: true,  piano: true,  arpeggio: true,  pad: false, lead: true  },
+  break:   { kick: false, clap: false, hihat: false, bass: false, piano: true,  arpeggio: false, pad: false, lead: false },
+  outro:   { kick: false, clap: false, hihat: false, bass: true,  piano: true,  arpeggio: false, pad: false, lead: false },
+  default: { kick: false, clap: false, hihat: false, bass: true,  piano: true,  arpeggio: true,  pad: false, lead: true  },
 }
 
 export const GENRE_DENSITY: Record<string, DensityTable> = {
